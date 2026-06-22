@@ -11,7 +11,6 @@ import { createChatController } from '../controllers/chat.js';
 import { createMediaController } from '../controllers/media.js';
 import { createPeerController } from '../controllers/peers.js';
 import { createSignalingController } from '../controllers/signaling.js';
-import { createStatsController } from '../controllers/stats.js';
 import { createUI, getElements } from '../controllers/ui.js';
 import { createBrowserApi } from '../browserApi.js';
 
@@ -39,7 +38,7 @@ function sendSignal(payload) {
   if (!appState.room.isWebSocketOpen() || !appState.room.getRoomId()) {
     return false;
   }
-  const ws = appState.room.getWebSocket();
+  const ws = appState.room.getWs();
   ws.send(JSON.stringify(Object.assign({ room: appState.room.getRoomId(), from: appState.getMyId() }, payload)));
   return true;
 }
@@ -51,8 +50,6 @@ const media = createMediaController({
   ui: ui,
   browserApi: browserApi
 });
-
-const stats = createStatsController(appState);
 
 const chat = createChatController({
   appState: appState,
@@ -75,7 +72,6 @@ const signaling = createSignalingController({
   peerController: peers,
   reconnectDelaysMs: RECONNECT_DELAYS_MS,
   appState: appState,
-  statsController: stats,
   ui: ui,
   browserApi: browserApi
 });
@@ -161,13 +157,6 @@ function bindEvents() {
       }
     });
   }
-  if (elements.recStart) {
-    elements.recStart.addEventListener('click', media.startRecording);
-  }
-  if (elements.recStop) {
-    elements.recStop.addEventListener('click', media.stopRecording);
-  }
-
   window.addEventListener('beforeunload', function () {
     signaling.leaveRoom();
   });
@@ -175,5 +164,4 @@ function bindEvents() {
 
 bindEvents();
 ui.initCapabilityHints();
-stats.start(ui.getStatsEl.bind(ui));
 ui.renderMembers([]);

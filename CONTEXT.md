@@ -77,9 +77,8 @@ WebRTC 的双向数据传输通道。
 | signaling.js | WebSocket 连接、消息处理 |
 | peers.js | Peer 连接管理、SDP/ICE 协商 |
 | chat.js | DataChannel 聊天消息收发 |
-| media.js | 媒体流管理、录制 |
+| media.js | 媒体流管理 |
 | ui.js | DOM 操作、视图渲染 |
-| stats.js | WebRTC 统计信息收集 |
 
 ---
 

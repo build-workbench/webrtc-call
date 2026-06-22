@@ -45,7 +45,7 @@ layout: home
   <div class="feature-card">
     <div class="feature-card-title">🎥 浏览器媒体</div>
     <div class="feature-card-desc">
-      摄像头、麦克风、屏幕共享、录制和点对点聊天，全部使用原生 JS。
+      摄像头、麦克风、屏幕共享和点对点聊天，全部使用原生 JS。
     </div>
     <div class="feature-tags">
       <a href="./guide" class="feature-tag">技术指南</a>

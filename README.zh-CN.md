@@ -19,7 +19,7 @@ LessUp WebRTC 面向想快速看懂 WebRTC 核心链路的人：代码量适中�
 
 - WebSocket 信令、房间管理、身份绑定
 - 浏览器端音视频直连与 DataChannel 聊天
-- 静音、摄像头开关、屏幕共享、本地录制
+- 静音、摄像头开关、屏幕共享
 - 无框架前端，直接由 Go 服务静态文件
 - Docker 部署与公开文档站点
 
@@ -31,7 +31,6 @@ LessUp WebRTC 面向想快速看懂 WebRTC 核心链路的人：代码量适中�
 | 浏览器客户端 | 原生 JavaScript ES Modules |
 | 通话模型 | 一对一与小规模 Mesh |
 | 媒体控制 | 静音、摄像头、共享屏幕 |
-| 录制 | 浏览器端 `MediaRecorder` |
 | 规范与文档 | GitHub Pages + OpenSpec |
 
 ## 快速开始
@@ -68,7 +67,6 @@ docker run --rm -p 8080:8080 webrtc
      ├─ controllers/media.js
      ├─ controllers/peers.js
      ├─ controllers/signaling.js
-     ├─ controllers/stats.js
      └─ controllers/ui.js
 
 Go 服务

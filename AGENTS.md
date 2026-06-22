@@ -5,10 +5,10 @@ Repository guidance for AI coding agents working on **LessUp WebRTC**.
 ## Project snapshot
 
 - **Purpose:** a polished, learning-oriented WebRTC demo with a Go signaling server and a vanilla JavaScript client
-- **Runtime scope:** WebSocket signaling, 1:1 and small-room mesh calling, DataChannel chat, screen share, browser-side recording
+- **Runtime scope:** WebSocket signaling, 1:1 and small-room mesh calling, DataChannel chat, screen share
 - **Primary backend:** `cmd/server/main.go`, `internal/signal/`
 - **Primary frontend:** `web/index.html`, `web/src/`
-- **Public site:** Jekyll Pages from the repository root
+- **Public site:** VitePress Pages from `docs/vitepress/`
 - **Source of truth:** `openspec/`
 
 ## Non-negotiable rules
@@ -82,15 +82,14 @@ Use the existing commands already supported by the repo:
 ```bash
 make check
 cd web && npm test
-cd e2e && npm test
 openspec validate --all --strict
 ```
 
 ## Documentation and Pages expectations
 
 - Pages is a project site, not a README mirror.
-- `docs/index.md` is the docs hub.
-- `docs/specs*.md` is the public entrypoint for OpenSpec material.
+- `docs/vitepress/` is the VitePress source; the public site is built from there.
+- `docs/vitepress/{zh,en}/specs.md` is the public entrypoint for OpenSpec material.
 - If a page links to specs, it should link to current `openspec/` content or to the curated public spec hub.
 - Avoid outdated module names like `web/app.js` or `app.*.js`; use the real `web/src/` structure.
 
@@ -110,4 +109,4 @@ These are intentional design choices, not bugs:
 - **No authentication:** This is a demo; production deployments would need auth
 - **Public STUN only:** Uses Google's public STUN server; TURN requires manual configuration
 - **Chinese UI:** Primary audience is Chinese developers
-- **No video recording backend:** Recording is browser-side only (MediaRecorder API)
+- **No recording:** Recording was removed to keep the demo focused on core WebRTC signaling and media

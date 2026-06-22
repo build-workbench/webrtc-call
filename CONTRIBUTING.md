@@ -1,11 +1,3 @@
----
-layout: default
-title: Contributing — WebRTC
-description: Contribution workflow for LessUp WebRTC using OpenSpec, focused reviews, and low-noise closeout practices.
----
-
-[← Back to Home]({{ site.baseurl }}/)
-
 # Contributing
 
 This repository uses **OpenSpec** for planning and change control. Contributions should keep the project coherent, low-noise, and easy to maintain.
@@ -29,7 +21,6 @@ This repository uses **OpenSpec** for planning and change control. Contributions
 3. **Validate**
    - `make check`
    - `cd web && npm test`
-   - `cd e2e && npm test` when UI or signaling behavior changes
    - `openspec validate --all --strict`
 
 4. **Review**
@@ -64,13 +55,13 @@ The hook:
 | Frontend | Vanilla JavaScript ES modules |
 | Lint | `golangci-lint` v2 config |
 | Specs | `openspec/` only |
-| Pages | Jekyll from repository root |
+| Pages | VitePress (`docs/vitepress/`) |
 
 ## Pull requests
 
 - Reference the active OpenSpec change when relevant.
 - Keep PR scope narrow.
 - If you delete or consolidate docs, explain why.
-- Make sure public docs do not expose private maintenance or archive intentions.
+- Make sure public Docs do not expose private maintenance or archive intentions.
 
 Thanks for helping keep the project clean and stable.

@@ -14,7 +14,7 @@ cmd/server/main.go          HTTP entrypoint and static file serving
 internal/signal/hub.go      signaling hub, rooms, limits, cleanup
 internal/signal/message.go  message envelope
 web/src/core/app.js         browser app assembly
-web/src/controllers/        media, peers, signaling, stats, UI
+web/src/controllers/        media, peers, signaling, UI
 web/src/config.js           client defaults and capability checks
 ```
 
@@ -50,10 +50,9 @@ The frontend is intentionally split by responsibility:
 | Module | Responsibility |
 |:-------|:---------------|
 | `core/app.js` | wires everything together |
-| `controllers/media.js` | local media, screen share, recording |
+| `controllers/media.js` | local media, screen share |
 | `controllers/peers.js` | `RTCPeerConnection` lifecycle and chat |
 | `controllers/signaling.js` | WebSocket join/leave/reconnect flow |
-| `controllers/stats.js` | connection stats |
 | `controllers/ui.js` | DOM updates and control state |
 | `config.js` | client ID, capability checks, RTC defaults |
 
@@ -63,7 +62,6 @@ The frontend is intentionally split by responsibility:
 go run ./cmd/server
 make check
 cd web && npm test
-cd e2e && npm test
 ```
 
 ## Where to look next

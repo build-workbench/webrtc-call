@@ -19,7 +19,7 @@ LessUp WebRTC is designed for people who want a small, readable codebase that st
 
 - WebSocket signaling with identity binding and room management
 - peer-to-peer media and DataChannel chat
-- screen sharing and browser-side recording
+- screen sharing
 - a framework-free frontend served directly by Go
 - Docker-ready deployment and a public docs site
 
@@ -31,7 +31,6 @@ LessUp WebRTC is designed for people who want a small, readable codebase that st
 | Browser client | Vanilla JavaScript ES modules |
 | Call model | 1:1 and small-room mesh |
 | Media controls | Mute, camera toggle, screen share |
-| Recording | Local `MediaRecorder` export |
 | Docs and specs | GitHub Pages + OpenSpec |
 
 ## Quick start
@@ -68,7 +67,6 @@ Browser UI
      ├─ controllers/media.js
      ├─ controllers/peers.js
      ├─ controllers/signaling.js
-     ├─ controllers/stats.js
      └─ controllers/ui.js
 
 Go server

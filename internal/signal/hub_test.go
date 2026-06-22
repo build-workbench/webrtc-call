@@ -81,7 +81,7 @@ func TestIsOriginAllowed(t *testing.T) {
 }
 
 func TestHubAddClientBroadcastsMembers(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 
 	c1 := newTestClient("a", testRoom, 4)
 	c2 := newTestClient("b", testRoom, 4)
@@ -125,7 +125,7 @@ func TestHubAddClientBroadcastsMembers(t *testing.T) {
 }
 
 func TestHubRemoveClientUpdatesMembersAndDeletesEmptyRoom(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	room := testRoom
 
 	c1 := newTestClient("a", room, 4)
@@ -163,7 +163,7 @@ func TestHubRemoveClientUpdatesMembersAndDeletesEmptyRoom(t *testing.T) {
 }
 
 func TestHubForwardSendsToTargetClient(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	room := testRoom
 
 	src := newTestClient("a", room, 4)
@@ -186,7 +186,7 @@ func TestHubForwardSendsToTargetClient(t *testing.T) {
 }
 
 func TestHubAddClientRejectsEmptyRoomOrID(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 
 	if err := h.addClient(newTestClient("", testRoom, 4)); err == nil {
 		t.Fatal("expected empty id to be rejected")
@@ -204,7 +204,7 @@ func TestHubAddClientRejectsEmptyRoomOrID(t *testing.T) {
 }
 
 func TestHubRemoveClientIdempotent(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 
 	c := newTestClient("a", testRoom, 4)
 	if err := h.addClient(c); err != nil {
@@ -225,7 +225,7 @@ func TestHubRemoveClientIdempotent(t *testing.T) {
 }
 
 func TestHubForwardToNonExistentRoom(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	src := newTestClient("a", "ghost", 4)
 	if err := h.forward(src, Message{Type: "offer", To: "b"}); err == nil {
 		t.Fatal("expected missing room error")
@@ -233,7 +233,7 @@ func TestHubForwardToNonExistentRoom(t *testing.T) {
 }
 
 func TestHubForwardToNonExistentClient(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	room := testRoom
 	c := newTestClient("a", room, 4)
 	if err := h.addClient(c); err != nil {
@@ -247,7 +247,7 @@ func TestHubForwardToNonExistentClient(t *testing.T) {
 }
 
 func TestHubMultipleRoomsIsolation(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 
 	c1 := newTestClient("a", testRoom, 4)
 	c2 := newTestClient("b", "room2", 4)
@@ -277,7 +277,7 @@ func TestHubMultipleRoomsIsolation(t *testing.T) {
 }
 
 func TestHubMaxRoomsLimit(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 
 	for i := 0; i < MaxRooms; i++ {
 		room := "room" + string(rune('A'+i%26)) + string(rune('0'+i/26%10)) + string(rune('0'+i/260%10)) + string(rune('0'+i/2600%10))
@@ -305,7 +305,7 @@ func TestHubMaxRoomsLimit(t *testing.T) {
 }
 
 func TestHubMaxClientsPerRoomLimit(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	room := "crowded"
 
 	for i := 0; i < MaxClientsPerRoom; i++ {
@@ -331,7 +331,7 @@ func TestHubMaxClientsPerRoomLimit(t *testing.T) {
 }
 
 func TestHubForwardFailsWhenBufferFull(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	room := testRoom
 
 	src := newTestClient("a", room, 4)
@@ -352,7 +352,7 @@ func TestHubForwardFailsWhenBufferFull(t *testing.T) {
 }
 
 func TestIsOriginAllowedInvalidURL(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	r := &http.Request{Host: "localhost:8080", Header: http.Header{}}
 	r.Header.Set("Origin", "://invalid")
 	if h.isOriginAllowed(r) {
@@ -361,7 +361,7 @@ func TestIsOriginAllowedInvalidURL(t *testing.T) {
 }
 
 func TestNewHubDefaultOptions(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	if h.rooms == nil {
 		t.Fatal("rooms map should be initialized")
 	}
@@ -387,7 +387,7 @@ func TestNewHubWithOptionsCopiesSlice(t *testing.T) {
 }
 
 func TestHubRejectsDuplicateClientID(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	first := newTestClient("dup", testRoom, 4)
 	second := newTestClient("dup", testRoom, 4)
 
@@ -403,7 +403,7 @@ func TestHubRejectsDuplicateClientID(t *testing.T) {
 }
 
 func TestHandleJoinAllowsHumanReadableRoomNames(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	client := newTestClient("", "", 4)
 
 	err := h.handleJoin(client, Message{Type: "join", From: "user_01", Room: "团队 room.1"})
@@ -429,7 +429,7 @@ func TestClientCloseHandlesZeroValueConn(t *testing.T) {
 }
 
 func TestHubRemoveClientDoesNotRemoveReplacementConnection(t *testing.T) {
-	h := NewHub()
+	h := NewHubWithOptions(Options{})
 	room := testRoom
 	first := newTestClient("dup", room, 4)
 	second := newTestClient("dup", room, 4)

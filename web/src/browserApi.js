@@ -50,16 +50,6 @@ export function createBrowserApi(overrides) {
     },
 
     /**
-     * 创建 MediaRecorder
-     * @param {MediaStream} stream - 媒体流
-     * @param {Object} [options] - 录制选项
-     * @returns {MediaRecorder}
-     */
-    createMediaRecorder: merged.createMediaRecorder || function (stream, options) {
-      return new MediaRecorder(stream, options);
-    },
-
-    /**
      * 设置定时器
      * @param {Function} callback - 回调函数
      * @param {number} delay - 延迟毫秒数

@@ -11,12 +11,8 @@ description: LessUp WebRTC 的公开 OpenSpec 规范地图与 change 工作流�
 
 | 能力 | 作用 | 源文件 |
 |:-----|:-----|:-------|
-| Platform | 产品范围、能力边界与安全预期 | [platform/spec.md](https://github.com/LessUp/webrtc/blob/main/openspec/specs/platform/spec.md) |
 | Signaling | WebSocket 生命周期、房间规则、转发行为与限制 | [signaling/spec.md](https://github.com/LessUp/webrtc/blob/main/openspec/specs/signaling/spec.md) |
 | Frontend | 浏览器模块边界与客户端行为 | [frontend/spec.md](https://github.com/LessUp/webrtc/blob/main/openspec/specs/frontend/spec.md) |
-| API | HTTP 端点、消息结构与错误码 | [api/spec.md](https://github.com/LessUp/webrtc/blob/main/openspec/specs/api/spec.md) |
-| Storage | 内存状态模型与并发假设 | [storage/spec.md](https://github.com/LessUp/webrtc/blob/main/openspec/specs/storage/spec.md) |
-| Testing | 预期校验面与测试类型 | [testing-spec.feature](https://github.com/LessUp/webrtc/blob/main/openspec/testing-spec.feature) |
 
 ## Change 工作流
 
@@ -34,9 +30,3 @@ description: LessUp WebRTC 的公开 OpenSpec 规范地图与 change 工作流�
 - 完成仓库校验
 - 合并前做 review
 - 实现与规范同步完成后再归档 change
-
-## 当前清理 change
-
-当前这轮全仓治理工作记录在：
-
-- [`openspec/changes/stabilize-project-closeout/`](https://github.com/LessUp/webrtc/tree/main/openspec/changes/stabilize-project-closeout)

@@ -19,8 +19,6 @@ export function getElements() {
     muteBtn: byId('muteBtn'),
     cameraBtn: byId('cameraBtn'),
     screenBtn: byId('screenBtn'),
-    recStart: byId('recStart'),
-    recStop: byId('recStop'),
     idEl: byId('myId')
   };
 }
@@ -58,14 +56,14 @@ export function createUI(options) {
     if (!peers.isEmpty()) {
       return 'calling';
     }
-    return room.status;
+    return room.getStatus();
   }
 
   function statusDotClass() {
     if (!peers.isEmpty()) {
       return 'status__dot--calling';
     }
-    const status = room.status;
+    const status = room.getStatus();
     if (status === RoomStatus.JOINED) {
       return 'status__dot--joined';
     }
@@ -76,7 +74,7 @@ export function createUI(options) {
   }
 
   function updateControls() {
-    const status = room.status;
+    const status = room.getStatus();
     const joined = status === RoomStatus.JOINED || status === RoomStatus.RECONNECTING;
     const activeCall = !peers.isEmpty();
     const localReady = mediaState.hasLocalStream();
@@ -86,11 +84,11 @@ export function createUI(options) {
       elements.statusEl.innerHTML = '<span class="status__dot ' + dotClass + '"></span>' + (roomStateText[roomStatus()] || roomStateText.idle);
     }
     if (elements.joinBtn) {
-      elements.joinBtn.textContent = room.isIdle ? 'Join' : 'Leave';
+      elements.joinBtn.textContent = room.isIdle() ? 'Join' : 'Leave';
       elements.joinBtn.disabled = !capabilities.webSocket || !capabilities.rtc || status === RoomStatus.CONNECTING;
     }
     if (elements.roomInput) {
-      elements.roomInput.disabled = !room.isIdle;
+      elements.roomInput.disabled = !room.isIdle();
     }
     if (elements.remoteInput) {
       elements.remoteInput.disabled = !joined;
@@ -110,19 +108,13 @@ export function createUI(options) {
       elements.cameraBtn.textContent = mediaState.isCameraOff() ? 'Camera On' : 'Camera Off';
     }
     if (elements.screenBtn) {
-      elements.screenBtn.disabled = !capabilities.screen || room.isIdle;
+      elements.screenBtn.disabled = !capabilities.screen || room.isIdle();
       elements.screenBtn.textContent = mediaState.isUsingScreen() ? 'Stop Share' : 'Share Screen';
-    }
-    if (elements.recStart) {
-      elements.recStart.disabled = !capabilities.record || mediaState.isRecording();
-    }
-    if (elements.recStop) {
-      elements.recStop.disabled = !mediaState.isRecording();
     }
   }
 
   function setRoomState(nextState) {
-    room.status = nextState;
+    room.setStatus(nextState);
   }
 
   function appendChat(text) {
@@ -136,12 +128,12 @@ export function createUI(options) {
   }
 
   function renderMembers(list) {
-    room.lastMembers = list;
+    room.setLastMembers(list);
     if (!elements.membersEl) {
       return;
     }
 
-    const members = room.lastMembers;
+    const members = room.getLastMembers();
     elements.membersEl.replaceChildren();
     if (!members.length) {
       const empty = document.createElement('span');
@@ -203,16 +195,12 @@ export function createUI(options) {
     videoEl.autoplay = true;
     videoEl.playsInline = true;
 
-    const statsEl = document.createElement('div');
-    statsEl.className = 'video-tile__stats';
-
     tileEl.appendChild(labelEl);
     tileEl.appendChild(videoEl);
-    tileEl.appendChild(statsEl);
     elements.videosEl.appendChild(tileEl);
 
     // 缓存 UI 元素
-    tile = { tileEl: tileEl, labelEl: labelEl, videoEl: videoEl, statsEl: statsEl };
+    tile = { tileEl: tileEl, labelEl: labelEl, videoEl: videoEl };
     peerTiles.set(peerId, tile);
 
     return videoEl;
@@ -255,16 +243,6 @@ export function createUI(options) {
     peerTiles.delete(peerId);
   }
 
-  /**
-   * 获取 Peer 的 stats 元素
-   * @param {string} peerId - Peer ID
-   * @returns {HTMLElement|null}
-   */
-  function getStatsEl(peerId) {
-    const tile = peerTiles.get(peerId);
-    return tile ? tile.statsEl : null;
-  }
-
   function initCapabilityHints() {
     if (!capabilities.webSocket || !capabilities.rtc) {
       setError('当前浏览器不支持 WebRTC / WebSocket，无法发起通话');
@@ -274,15 +252,11 @@ export function createUI(options) {
     if (elements.screenBtn && !capabilities.screen) {
       elements.screenBtn.title = '当前浏览器不支持屏幕共享';
     }
-    if (elements.recStart && !capabilities.record) {
-      elements.recStart.title = '当前浏览器不支持本地录制';
-    }
   }
 
   return {
     appendChat: appendChat,
     ensureRemoteTile: ensureRemoteTile,
-    getStatsEl: getStatsEl,
     initCapabilityHints: initCapabilityHints,
     removeRemoteTile: removeRemoteTile,
     renderMembers: renderMembers,

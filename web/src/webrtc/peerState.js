@@ -299,24 +299,6 @@ export function createPeerState(options) {
     pendingCandidates = [];
   }
 
-  /**
-   * 获取快照（用于调试）
-   * @returns {Object}
-   */
-  function getSnapshot() {
-    return {
-      peerId: peerId,
-      polite: polite,
-      connectionState: connectionState,
-      makingOffer: makingOffer,
-      ignoreOffer: ignoreOffer,
-      isSettingRemoteAnswerPending: isSettingRemoteAnswerPending,
-      pendingCandidatesCount: pendingCandidates.length,
-      hasDataChannel: !!dc,
-      hasRemoteStream: !!remoteStream
-    };
-  }
-
   return {
     // 常量
     peerId: peerId,
@@ -335,9 +317,6 @@ export function createPeerState(options) {
     createOffer: createOffer,
     handleRemoteDescription: handleRemoteDescription,
     handleIceCandidate: handleIceCandidate,
-    close: close,
-
-    // 调试
-    getSnapshot: getSnapshot
+    close: close
   };
 }

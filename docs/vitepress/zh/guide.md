@@ -14,7 +14,7 @@ cmd/server/main.go          HTTP 入口与静态文件服务
 internal/signal/hub.go      signaling hub、房间、限制、清理
 internal/signal/message.go  消息封装
 web/src/core/app.js         浏览器端总入口
-web/src/controllers/        media / peers / signaling / stats / UI
+web/src/controllers/        media / peers / signaling / UI
 web/src/config.js           默认配置与能力检测
 ```
 
@@ -50,10 +50,9 @@ web/src/config.js           默认配置与能力检测
 | 模块 | 作用 |
 |:-----|:-----|
 | `core/app.js` | 总装配入口 |
-| `controllers/media.js` | 本地媒体、共享屏幕、录制 |
+| `controllers/media.js` | 本地媒体、共享屏幕 |
 | `controllers/peers.js` | `RTCPeerConnection` 生命周期与聊天 |
 | `controllers/signaling.js` | WebSocket 加入、离开、重连流程 |
-| `controllers/stats.js` | 连接统计 |
 | `controllers/ui.js` | DOM 更新与按钮状态 |
 | `config.js` | 客户端 ID、能力检测、RTC 默认值 |
 
@@ -63,7 +62,6 @@ web/src/config.js           默认配置与能力检测
 go run ./cmd/server
 make check
 cd web && npm test
-cd e2e && npm test
 ```
 
 ## 下一步阅读

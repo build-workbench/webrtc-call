@@ -147,89 +147,11 @@ export function createMediaController(options) {
     void syncAllPeerMedia();
   }
 
-  function getRecordStream() {
-    for (const peerState of peers.values()) {
-      const stream = peerState.getRemoteStream();
-      if (stream) {
-        return stream;
-      }
-    }
-    if (mediaState.isUsingScreen() && mediaState.getScreenStream()) {
-      return mediaState.getScreenStream();
-    }
-    return mediaState.getLocalStream();
-  }
-
-  function startRecording() {
-    if (!capabilities.record) {
-      ui.setError('当前浏览器不支持录制');
-      return;
-    }
-    if (mediaState.isRecording()) {
-      return;
-    }
-
-    const stream = getRecordStream();
-    if (!stream) {
-      ui.setError('没有可录制的媒体流');
-      return;
-    }
-
-    try {
-      mediaState.clearRecordedChunks();
-      const recorder = browserApi.createMediaRecorder(stream);
-      mediaState.setRecorder(recorder);
-
-      recorder.ondataavailable = function (event) {
-        if (event.data && event.data.size > 0) {
-          mediaState.addRecordedChunk(event.data);
-        }
-      };
-      recorder.onerror = function (event) {
-        const err = event.error || event;
-        ui.setError('录制出错：' + (err.message || err.name || '未知错误'));
-      };
-      recorder.onstop = function () {
-        const chunks = mediaState.getRecordedChunks().slice();
-        mediaState.setRecorder(null);
-        mediaState.clearRecordedChunks();
-        if (!chunks.length) {
-          return;
-        }
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'webrtc-recording.webm';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      };
-
-      recorder.start();
-      ui.setError('');
-    } catch (err) {
-      console.error(err);
-      ui.setError('创建录制器失败：' + (err.message || err.name || '未知错误'));
-    }
-  }
-
-  function stopRecording() {
-    const recorder = mediaState.getRecorder();
-    if (!recorder || recorder.state === 'inactive') {
-      return;
-    }
-    recorder.stop();
-  }
-
   return {
     currentVideoTrack: function () { return mediaState.getCurrentVideoTrack(); },
     ensureLocalMedia: ensureLocalMedia,
-    startRecording: startRecording,
     startScreenShare: startScreenShare,
     stopLocalMedia: stopLocalMedia,
-    stopRecording: stopRecording,
     stopScreenShare: stopScreenShare,
     syncAllPeerMedia: syncAllPeerMedia,
     syncPeerMedia: syncPeerMedia

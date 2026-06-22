@@ -67,7 +67,6 @@ describe('app.config', function () {
       expect(caps).toHaveProperty('rtc');
       expect(caps).toHaveProperty('media');
       expect(caps).toHaveProperty('screen');
-      expect(caps).toHaveProperty('record');
       expect(typeof caps.webSocket).toBe('boolean');
     });
   });

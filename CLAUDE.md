@@ -8,7 +8,7 @@ Use `AGENTS.md` as the primary project brief.
 - Backend entry: `cmd/server/main.go`
 - Signaling core: `internal/signal/`
 - Frontend entry: `web/src/core/app.js`
-- Public docs and Pages source: `docs/`, `index*.md`, `_layouts/`, `_includes/`, `_config.yml`
+- Public docs and Pages source: `docs/vitepress/`
 
 ## Working rules
 
@@ -18,7 +18,6 @@ Use `AGENTS.md` as the primary project brief.
 4. Use the existing commands:
    - `make check`
    - `cd web && npm test`
-   - `cd e2e && npm test`
    - `openspec validate --all --strict`
 5. Use `/review` before merge or before calling a major cleanup batch complete.
 

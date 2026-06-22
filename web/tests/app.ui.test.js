@@ -6,13 +6,12 @@ function createMockAppState(overrides) {
   const appState = createAppState({ myId: overrides && overrides.myId ? overrides.myId : 'testuser' });
   // 设置初始状态
   if (overrides) {
-    if (overrides.roomState) appState.room.status = overrides.roomState;
+    if (overrides.roomState) appState.room.setStatus(overrides.roomState);
     if (overrides.localStream) appState.media.setLocalStream(overrides.localStream);
     if (overrides.screenStream) appState.media.setScreenStream(overrides.screenStream);
     if (overrides.usingScreen !== undefined) appState.media.setUsingScreen(overrides.usingScreen);
     if (overrides.muted !== undefined) appState.media.setMuted(overrides.muted);
     if (overrides.cameraOff !== undefined) appState.media.setCameraOff(overrides.cameraOff);
-    if (overrides.recorder) appState.media.setRecorder(overrides.recorder);
     if (overrides.peers) {
       overrides.peers.forEach(function (peer, id) {
         appState.peers.set(id, peer);
@@ -27,8 +26,7 @@ function createMockCapabilities() {
     webSocket: true,
     rtc: true,
     media: true,
-    screen: true,
-    record: true
+    screen: true
   };
 }
 
@@ -62,8 +60,7 @@ describe('app.ui', function () {
         '<div id="videos"></div><button id="join"></button>' +
         '<button id="call"></button><button id="hangup"></button>' +
         '<button id="muteBtn"></button><button id="cameraBtn"></button>' +
-        '<button id="screenBtn"></button><button id="recStart"></button>' +
-        '<button id="recStop"></button><span id="myId"></span>';
+        '<button id="screenBtn"></button><span id="myId"></span>';
       var el = getElements();
       expect(el.statusEl).not.toBeNull();
       expect(el.joinBtn).not.toBeNull();
@@ -101,7 +98,7 @@ describe('app.ui', function () {
         appState: appState
       });
       ui.setRoomState(RoomStatus.JOINED);
-      expect(appState.room.status).toBe(RoomStatus.JOINED);
+      expect(appState.room.getStatus()).toBe(RoomStatus.JOINED);
       expect(elements.statusEl.textContent).toContain('已加入');
       expect(elements.statusEl.querySelector('.status__dot--joined')).not.toBeNull();
     });
@@ -181,7 +178,7 @@ describe('app.ui', function () {
       var appState = createMockAppState();
       var elements = getElements();
       var ui = createUI({
-        capabilities: { webSocket: false, rtc: false, media: true, screen: true, record: true },
+        capabilities: { webSocket: false, rtc: false, media: true, screen: true },
         elements: elements,
         roomStateText: ROOM_STATE_TEXT,
         appState: appState

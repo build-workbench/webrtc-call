@@ -18,24 +18,6 @@ export function createMediaState() {
   let _usingScreen = false;
   let _muted = false;
   let _cameraOff = false;
-  let _recorder = null;
-  let _recordedChunks = [];
-
-  /**
-   * 获取当前状态快照
-   * @returns {Object} 状态快照
-   */
-  function getSnapshot() {
-    return {
-      localStream: _localStream,
-      screenStream: _screenStream,
-      usingScreen: _usingScreen,
-      muted: _muted,
-      cameraOff: _cameraOff,
-      recorder: _recorder,
-      recordedChunks: _recordedChunks.slice()
-    };
-  }
 
   // === 本地流 ===
 
@@ -73,16 +55,6 @@ export function createMediaState() {
   function setCameraOff(value) { _cameraOff = value; observable.notify(); }
   function toggleCameraOff() { _cameraOff = !_cameraOff; observable.notify(); return _cameraOff; }
 
-  // === 录制 ===
-
-  function getRecorder() { return _recorder; }
-  function setRecorder(recorder) { _recorder = recorder; observable.notify(); }
-  function isRecording() { return _recorder && _recorder.state !== 'inactive'; }
-  function getRecordedChunks() { return _recordedChunks; }
-  function setRecordedChunks(chunks) { _recordedChunks = chunks; observable.notify(); }
-  function addRecordedChunk(chunk) { _recordedChunks.push(chunk); observable.notify(); }
-  function clearRecordedChunks() { _recordedChunks = []; observable.notify(); }
-
   // === 重置 ===
 
   function reset() {
@@ -103,17 +75,12 @@ export function createMediaState() {
     _usingScreen = false;
     _muted = false;
     _cameraOff = false;
-    _recorder = null;
-    _recordedChunks = [];
     observable.notify();
   }
 
   return {
     // 订阅
     subscribe: observable.subscribe,
-
-    // 快照
-    getSnapshot: getSnapshot,
 
     // 本地流
     getLocalStream: getLocalStream,
@@ -134,15 +101,6 @@ export function createMediaState() {
     isCameraOff: isCameraOff,
     setCameraOff: setCameraOff,
     toggleCameraOff: toggleCameraOff,
-
-    // 录制
-    getRecorder: getRecorder,
-    setRecorder: setRecorder,
-    isRecording: isRecording,
-    getRecordedChunks: getRecordedChunks,
-    setRecordedChunks: setRecordedChunks,
-    addRecordedChunk: addRecordedChunk,
-    clearRecordedChunks: clearRecordedChunks,
 
     // 重置
     reset: reset

@@ -362,16 +362,6 @@ body {
   display: block;
 }
 
-.video-tile__stats {
-  display: flex;
-  gap: 12px;
-  padding: 6px 12px;
-  font-size: 11px;
-  color: var(--muted);
-  border-top: 1px solid var(--border);
-  flex-wrap: wrap;
-}
-
 .chat-log {
   height: 160px;
   overflow: auto;

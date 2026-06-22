@@ -23,7 +23,6 @@ function createMockUI() {
 
 function createMockMedia() {
   return {
-    stopRecording: vi.fn(),
     stopScreenShare: vi.fn(),
     stopLocalMedia: vi.fn()
   };
@@ -59,7 +58,7 @@ describe('createSignalingController', () => {
 
   describe('connectWS', () => {
     it('should create WebSocket with correct URL', () => {
-      appState.room.roomId = 'test-room';
+      appState.room.setRoomId('test-room');
 
       createSignalingController({
         capabilities: { webSocket: true, rtc: true },
@@ -75,7 +74,7 @@ describe('createSignalingController', () => {
     });
 
     it('should set status to CONNECTING', () => {
-      appState.room.roomId = 'test-room';
+      appState.room.setRoomId('test-room');
 
       createSignalingController({
         capabilities: { webSocket: true, rtc: true },
@@ -87,11 +86,11 @@ describe('createSignalingController', () => {
         browserApi
       }).connectWS();
 
-      expect(appState.room.status).toBe(RoomStatus.CONNECTING);
+      expect(appState.room.getStatus()).toBe(RoomStatus.CONNECTING);
     });
 
     it('should send JOIN message on open', () => {
-      appState.room.roomId = 'test-room';
+      appState.room.setRoomId('test-room');
 
       createSignalingController({
         capabilities: { webSocket: true, rtc: true },
@@ -114,7 +113,7 @@ describe('createSignalingController', () => {
     });
 
     it('should set status to JOINED on joined message', () => {
-      appState.room.roomId = 'test-room';
+      appState.room.setRoomId('test-room');
 
       createSignalingController({
         capabilities: { webSocket: true, rtc: true },
@@ -133,12 +132,12 @@ describe('createSignalingController', () => {
         from: 'test-client'
       });
 
-      expect(appState.room.status).toBe(RoomStatus.JOINED);
+      expect(appState.room.getStatus()).toBe(RoomStatus.JOINED);
       expect(ui.setError).toHaveBeenCalledWith('');
     });
 
     it('should render members on room_members message', () => {
-      appState.room.roomId = 'test-room';
+      appState.room.setRoomId('test-room');
 
       createSignalingController({
         capabilities: { webSocket: true, rtc: true },
@@ -161,7 +160,7 @@ describe('createSignalingController', () => {
     });
 
     it('should handle ERROR message with DUPLICATE_ID', () => {
-      appState.room.roomId = 'test-room';
+      appState.room.setRoomId('test-room');
 
       createSignalingController({
         capabilities: { webSocket: true, rtc: true },
@@ -180,11 +179,11 @@ describe('createSignalingController', () => {
         error: 'Client ID already exists'
       });
 
-      expect(appState.room.retryJoinAfterClose).toBe(true);
+      expect(appState.room.getRetryJoinAfterClose()).toBe(true);
     });
 
     it('should not connect if WebSocket not supported', () => {
-      appState.room.roomId = 'test-room';
+      appState.room.setRoomId('test-room');
 
       createSignalingController({
         capabilities: { webSocket: false, rtc: true },
@@ -203,7 +202,7 @@ describe('createSignalingController', () => {
 
   describe('leaveRoom', () => {
     it('should send LEAVE message and close connection', () => {
-      appState.room.roomId = 'test-room';
+      appState.room.setRoomId('test-room');
 
       const signaling = createSignalingController({
         capabilities: { webSocket: true, rtc: true },
@@ -228,7 +227,7 @@ describe('createSignalingController', () => {
     });
 
     it('should reset status to IDLE', () => {
-      appState.room.roomId = 'test-room';
+      appState.room.setRoomId('test-room');
 
       const signaling = createSignalingController({
         capabilities: { webSocket: true, rtc: true },
@@ -245,7 +244,7 @@ describe('createSignalingController', () => {
 
       signaling.leaveRoom();
 
-      expect(appState.room.status).toBe(RoomStatus.IDLE);
+      expect(appState.room.getStatus()).toBe(RoomStatus.IDLE);
     });
   });
 });

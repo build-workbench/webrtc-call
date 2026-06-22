@@ -29,7 +29,6 @@ web/
 │   │   ├── media.js        # Media stream handling
 │   │   ├── peers.js        # PeerConnection management
 │   │   ├── signaling.js    # WebSocket signaling
-│   │   ├── stats.js        # Connection statistics
 │   │   └── ui.js           # UI rendering
 │   └── config.js           # Configuration and constants
 ├── styles.css              # Responsive styles
@@ -104,12 +103,6 @@ The system SHALL manage media streams via media.js controller.
 - **WHEN** screen share button clicked
 - **THEN** SHALL request display media via getDisplayMedia
 - **AND** replace video track in peer connections
-
-#### Scenario: Recording
-
-- **WHEN** record button clicked
-- **THEN** SHALL create MediaRecorder with local stream
-- **AND** collect chunks into WebM file on stop
 
 ### Requirement: Peer Controller
 
@@ -209,8 +202,6 @@ state = {
     muted: boolean,            // Audio muted
     cameraOff: boolean,        // Video disabled
     peers: Map<string, Peer>,  // Peer connections
-    recorder: MediaRecorder,   // Active recorder
-    recordedChunks: Blob[],    // Recording data
 }
 ```
 

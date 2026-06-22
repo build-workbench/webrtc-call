@@ -15,17 +15,6 @@ export function createPeersState() {
   // 私有状态
   const _peers = new Map();
 
-  /**
-   * 获取当前状态快照
-   * @returns {Object} 状态快照
-   */
-  function getSnapshot() {
-    return {
-      peers: new Map(_peers),
-      size: _peers.size
-    };
-  }
-
   // === Peer 管理 ===
 
   function get(peerId) { return _peers.get(peerId); }
@@ -85,9 +74,6 @@ export function createPeersState() {
   return {
     // 订阅
     subscribe: observable.subscribe,
-
-    // 快照
-    getSnapshot: getSnapshot,
 
     // Map 代理
     get: get,

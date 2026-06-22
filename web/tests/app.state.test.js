@@ -9,38 +9,38 @@ describe('state subscribe/notify', function () {
     var room;
 
     beforeEach(function () {
-      room = createRoomState({ myId: 'test' });
+      room = createRoomState();
     });
 
     it('notifies on status change', function () {
       var called = false;
       room.subscribe(function () { called = true; });
-      room.status = 'connecting';
+      room.setStatus('connecting');
       expect(called).toBe(true);
     });
 
     it('notifies on roomId change', function () {
       var called = false;
       room.subscribe(function () { called = true; });
-      room.roomId = 'room1';
+      room.setRoomId('room1');
       expect(called).toBe(true);
     });
 
     it('unsubscribes correctly', function () {
       var count = 0;
       var unsub = room.subscribe(function () { count++; });
-      room.status = 'connecting';
+      room.setStatus('connecting');
       expect(count).toBe(1);
       unsub();
-      room.status = 'joined';
+      room.setStatus('joined');
       expect(count).toBe(1);
     });
 
     it('notifies once on reset', function () {
       var count = 0;
       room.subscribe(function () { count++; });
-      room.status = 'joined';
-      room.roomId = 'room1';
+      room.setStatus('joined');
+      room.setRoomId('room1');
       count = 0; // reset counter
       room.reset();
       expect(count).toBe(1);
@@ -51,32 +51,32 @@ describe('state subscribe/notify', function () {
       room.subscribe(function () {
         count++;
         // This would cause infinite recursion without anti-reentrancy
-        room.roomId = 'nested';
+        room.setRoomId('nested');
       });
-      room.status = 'connecting';
+      room.setStatus('connecting');
       // Should be 2: first from status change, then from roomId inside callback
       // But the roomId notification is suppressed by anti-reentrancy
       expect(count).toBe(1);
     });
 
     it('computes isIdle correctly', function () {
-      expect(room.isIdle).toBe(true);
-      room.status = 'joined';
-      expect(room.isIdle).toBe(false);
+      expect(room.isIdle()).toBe(true);
+      room.setStatus('joined');
+      expect(room.isIdle()).toBe(false);
     });
 
     it('computes isConnected correctly', function () {
-      expect(room.isConnected).toBe(false);
-      room.status = 'joined';
-      expect(room.isConnected).toBe(true);
+      expect(room.isConnected()).toBe(false);
+      room.setStatus('joined');
+      expect(room.isConnected()).toBe(true);
     });
 
     it('computes isConnecting correctly', function () {
-      expect(room.isConnecting).toBe(false);
-      room.status = 'connecting';
-      expect(room.isConnecting).toBe(true);
-      room.status = 'reconnecting';
-      expect(room.isConnecting).toBe(true);
+      expect(room.isConnecting()).toBe(false);
+      room.setStatus('connecting');
+      expect(room.isConnecting()).toBe(true);
+      room.setStatus('reconnecting');
+      expect(room.isConnecting()).toBe(true);
     });
   });
 
@@ -168,7 +168,7 @@ describe('state subscribe/notify', function () {
       appState.media.subscribe(function () { mediaNotified = true; });
       appState.peers.subscribe(function () { peersNotified = true; });
 
-      appState.room.status = 'connecting';
+      appState.room.setStatus('connecting');
       appState.media.toggleMuted();
       appState.peers.set('p1', {});
 

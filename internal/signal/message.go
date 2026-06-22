@@ -39,33 +39,4 @@ type Message struct {
 	Error     string          `json:"error,omitempty"`
 }
 
-// IsClientMessage 判断消息类型是否为客户端可发送的类型。
-func (m *Message) IsClientMessage() bool {
-	switch m.Type {
-	case MsgTypeJoin, MsgTypeLeave, MsgTypePing,
-		MsgTypeOffer, MsgTypeAnswer, MsgTypeCandidate, MsgTypeHangup:
-		return true
-	default:
-		return false
-	}
-}
 
-// IsServerMessage 判断消息类型是否为服务器发送的类型。
-func (m *Message) IsServerMessage() bool {
-	switch m.Type {
-	case MsgTypeJoined, MsgTypePong, MsgTypeRoomMembers, MsgTypeError:
-		return true
-	default:
-		return false
-	}
-}
-
-// NeedsRouting 判断消息是否需要路由到其他客户端。
-func (m *Message) NeedsRouting() bool {
-	switch m.Type {
-	case MsgTypeOffer, MsgTypeAnswer, MsgTypeCandidate, MsgTypeHangup:
-		return true
-	default:
-		return false
-	}
-}

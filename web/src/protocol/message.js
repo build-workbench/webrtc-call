@@ -28,40 +28,6 @@ export const ServerMessageType = {
   ERROR: 'error'
 };
 
-// ============ 类型守卫 ============
-
-/**
- * 判断是否为客户端消息类型
- * @param {string} type
- * @returns {boolean}
- */
-export function isClientMessageType(type) {
-  return Object.values(ClientMessageType).includes(type);
-}
-
-/**
- * 判断是否为服务器消息类型
- * @param {string} type
- * @returns {boolean}
- */
-export function isServerMessageType(type) {
-  return Object.values(ServerMessageType).includes(type);
-}
-
-/**
- * 判断消息是否需要路由
- * @param {string} type
- * @returns {boolean}
- */
-export function needsRouting(type) {
-  return [
-    ClientMessageType.OFFER,
-    ClientMessageType.ANSWER,
-    ClientMessageType.CANDIDATE,
-    ClientMessageType.HANGUP
-  ].includes(type);
-}
-
 // ============ 消息验证 ============
 
 /**

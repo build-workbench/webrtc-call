@@ -3,10 +3,10 @@ package signal
 import (
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"sort"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -50,11 +50,6 @@ type Hub struct {
 	allowAllOrigins bool
 	closed          bool
 	nextConnID      atomic.Uint64
-}
-
-// NewHub creates a new Hub with default options.
-func NewHub() *Hub {
-	return NewHubWithOptions(Options{})
 }
 
 // NewHubWithOptions creates a new Hub with custom options.
@@ -132,7 +127,6 @@ func (h *Hub) removeClient(c *Client) {
 	}
 
 	var shouldBroadcast bool
-	var roomRemoved bool
 
 	h.mu.Lock()
 	if m, ok := h.rooms[room]; ok {
@@ -147,14 +141,13 @@ func (h *Hub) removeClient(c *Client) {
 		if len(m) == 0 {
 			delete(h.rooms, room)
 			log.Printf("signal: room %s closed", room)
-			roomRemoved = true
 		} else {
 			shouldBroadcast = true
 		}
 	}
 	h.mu.Unlock()
 	c.setRoom("")
-	if shouldBroadcast && !roomRemoved {
+	if shouldBroadcast {
 		h.broadcastMembers(room)
 	}
 }
@@ -186,9 +179,6 @@ func (h *Hub) broadcastMembers(room string) {
 
 	// Send to all recipients while still holding lock (enqueue is non-blocking)
 	for _, cli := range recipients {
-		if cli == nil {
-			continue
-		}
 		if err := cli.enqueue(msg); err != nil {
 			log.Printf("signal: members broadcast failed room=%s conn=%d: %v", room, cli.connID, err)
 			// Remove client asynchronously to avoid deadlock
@@ -245,8 +235,7 @@ func (h *Hub) isOriginAllowed(r *http.Request) bool {
 		if err != nil {
 			return false
 		}
-		host := u.Hostname()
-		return isLocalhost(host)
+		return isLocalhostHost(u.Hostname())
 	}
 	for _, o := range h.allowedOrigins {
 		if o == origin {
@@ -256,26 +245,11 @@ func (h *Hub) isOriginAllowed(r *http.Request) bool {
 	return false
 }
 
-// isLocalhost checks if a hostname is localhost (IPv4, IPv6, or plain)
-func isLocalhost(host string) bool {
+// isLocalhostHost checks if a host string (with or without :port) refers to localhost.
+func isLocalhostHost(host string) bool {
+	// Strip port if present
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
 	return host == "localhost" || host == "127.0.0.1" || host == "::1"
-}
-
-// isLocalhostHost checks if a host:port string refers to localhost
-func isLocalhostHost(hostPort string) bool {
-	// Handle plain hostnames without port
-	if hostPort == "localhost" || hostPort == "127.0.0.1" || hostPort == "[::1]" {
-		return true
-	}
-	// Handle host:port format
-	if strings.HasPrefix(hostPort, "localhost:") {
-		return true
-	}
-	if strings.HasPrefix(hostPort, "127.0.0.1:") {
-		return true
-	}
-	if strings.HasPrefix(hostPort, "[::1]:") {
-		return true
-	}
-	return false
 }

@@ -45,7 +45,7 @@ layout: home
   <div class="feature-card">
     <div class="feature-card-title">🎥 Browser Media</div>
     <div class="feature-card-desc">
-      Camera, microphone, screen share, recording, and peer-to-peer chat — all in vanilla JS.
+      Camera, microphone, screen share, and peer-to-peer chat — all in vanilla JS.
     </div>
     <div class="feature-tags">
       <a href="./guide" class="feature-tag">Guide</a>

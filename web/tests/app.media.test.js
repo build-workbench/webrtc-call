@@ -11,7 +11,6 @@ function createMockAppState(overrides) {
     if (overrides.usingScreen !== undefined) appState.media.setUsingScreen(overrides.usingScreen);
     if (overrides.muted !== undefined) appState.media.setMuted(overrides.muted);
     if (overrides.cameraOff !== undefined) appState.media.setCameraOff(overrides.cameraOff);
-    if (overrides.recorder) appState.media.setRecorder(overrides.recorder);
     if (overrides.peers) {
       overrides.peers.forEach(function (peer, id) {
         appState.peers.set(id, peer);
@@ -22,7 +21,7 @@ function createMockAppState(overrides) {
 }
 
 function createMockCapabilities() {
-  return { webSocket: true, rtc: true, media: true, screen: true, record: true };
+  return { webSocket: true, rtc: true, media: true, screen: true };
 }
 
 function createMockUI() {
@@ -65,27 +64,6 @@ describe('app.media', function () {
     it('handles null localStream gracefully', function () {
       var ctrl = createMediaController({ capabilities: capabilities, elements: elements, appState: appState, ui: ui });
       expect(function () { ctrl.stopLocalMedia(); }).not.toThrow();
-    });
-  });
-
-  describe('getRecordStream (via startRecording)', function () {
-    it('shows error when no stream available', function () {
-      var ctrl = createMediaController({ capabilities: capabilities, elements: elements, appState: appState, ui: ui });
-      ctrl.startRecording();
-      // No stream → setError called
-    });
-
-    it('shows error when recording is not supported', function () {
-      var noRecordCaps = { webSocket: true, rtc: true, media: true, screen: true, record: false };
-      var ctrl = createMediaController({ capabilities: noRecordCaps, elements: elements, appState: appState, ui: ui });
-      ctrl.startRecording();
-    });
-  });
-
-  describe('stopRecording', function () {
-    it('handles no active recorder gracefully', function () {
-      var ctrl = createMediaController({ capabilities: capabilities, elements: elements, appState: appState, ui: ui });
-      expect(function () { ctrl.stopRecording(); }).not.toThrow();
     });
   });
 

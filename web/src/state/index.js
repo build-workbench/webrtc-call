@@ -15,7 +15,7 @@ import { createRoomState, RoomStatus } from './roomState.js';
  */
 export function createAppState(options) {
   const myId = options.myId;
-  const roomState = createRoomState({ myId: myId });
+  const roomState = createRoomState();
   const mediaState = createMediaState();
   const peersState = createPeersState();
 
@@ -25,28 +25,6 @@ export function createAppState(options) {
    */
   function getMyId() {
     return myId;
-  }
-
-  /**
-   * 获取所有状态的快照（用于调试）
-   * @returns {Object}
-   */
-  function getSnapshot() {
-    return {
-      myId: myId,
-      room: roomState.getSnapshot(),
-      media: mediaState.getSnapshot(),
-      peers: peersState.getSnapshot()
-    };
-  }
-
-  /**
-   * 重置所有状态
-   */
-  function resetAll() {
-    roomState.reset();
-    mediaState.reset();
-    peersState.clear();
   }
 
   return {
@@ -59,9 +37,7 @@ export function createAppState(options) {
     peers: peersState,
 
     // 全局
-    getMyId: getMyId,
-    getSnapshot: getSnapshot,
-    resetAll: resetAll
+    getMyId: getMyId
   };
 }
 

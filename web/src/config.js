@@ -32,8 +32,7 @@ export function getCapabilities() {
     webSocket: typeof window.WebSocket === 'function',
     rtc: typeof window.RTCPeerConnection === 'function',
     media: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
-    screen: !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia),
-    record: typeof window.MediaRecorder === 'function'
+    screen: !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
   };
 }
 
