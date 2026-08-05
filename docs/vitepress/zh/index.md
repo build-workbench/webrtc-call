@@ -13,7 +13,6 @@ layout: home
   <div class="home-nav">
     <a href="./guide">技术指南</a>
     <a href="https://github.com/LessUp/webrtc">GitHub</a>
-    <a href="../en/">English</a>
   </div>
 </div>
 

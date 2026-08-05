@@ -2,40 +2,40 @@
 
 # LessUp WebRTC
 
-**A polished WebRTC learning demo with a Go signaling server and a vanilla JavaScript client.**
+**一个用 Go 信令服务和原生 JavaScript 前端构建的、适合学习与演示的 WebRTC 项目。**
 
 [![CI](https://github.com/LessUp/webrtc/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/webrtc/actions/workflows/ci.yml)
 [![Pages](https://github.com/LessUp/webrtc/actions/workflows/pages.yml/badge.svg)](https://lessup.github.io/webrtc/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 
-[English](README.md) | [简体中文](README.zh-CN.md) | [Docs Site](https://lessup.github.io/webrtc/) | [OpenSpec Hub](docs/specs.md)
+[在线文档](https://lessup.github.io/webrtc/) | [OpenSpec 导航](docs/vitepress/zh/specs.md)
 
 </div>
 
-## Why this project
+## 项目定位
 
-LessUp WebRTC is designed for people who want a small, readable codebase that still covers the core moving parts of real-time browser communication:
+LessUp WebRTC 面向想快速看懂 WebRTC 核心链路的人：代码量适中，但关键能力完整，适合学习、演示和做小规模功能验证。
 
-- WebSocket signaling with identity binding and room management
-- peer-to-peer media and DataChannel chat
-- screen sharing
-- a framework-free frontend served directly by Go
-- Docker-ready deployment and a public docs site
+- WebSocket 信令、房间管理、身份绑定
+- 浏览器端音视频直连与 DataChannel 聊天
+- 静音、摄像头开关、屏幕共享
+- 无框架前端，直接由 Go 服务静态文件
+- Docker 部署与公开文档站点
 
-## What is implemented
+## 当前能力
 
-| Area | Status |
-|:-----|:-------|
-| Signaling server | Go + Gorilla WebSocket |
-| Browser client | Vanilla JavaScript ES modules |
-| Call model | 1:1 and small-room mesh |
-| Media controls | Mute, camera toggle, screen share |
-| Docs and specs | GitHub Pages + OpenSpec |
+| 模块 | 状态 |
+|:-----|:-----|
+| 信令服务 | Go + Gorilla WebSocket |
+| 浏览器客户端 | 原生 JavaScript ES Modules |
+| 通话模型 | 一对一与小规模 Mesh |
+| 媒体控制 | 静音、摄像头、共享屏幕 |
+| 规范与文档 | GitHub Pages + OpenSpec |
 
-## Quick start
+## 快速开始
 
-### Run locally
+### 本地运行
 
 ```bash
 git clone https://github.com/LessUp/webrtc.git
@@ -43,9 +43,9 @@ cd webrtc
 go run ./cmd/server
 ```
 
-Open `http://localhost:8080`, join the same room in two browser windows, and start a call.
+打开 `http://localhost:8080`，在两个浏览器窗口加入同一个房间后发起通话。
 
-### Run checks
+### 基础检查
 
 ```bash
 make check
@@ -59,63 +59,63 @@ docker build -f deploy/docker/Dockerfile -t webrtc .
 docker run --rm -p 8080:8080 webrtc
 ```
 
-## Architecture at a glance
+## 架构概览
 
 ```text
-Browser UI
+浏览器 UI
   └─ web/src/core/app.js
      ├─ controllers/media.js
      ├─ controllers/peers.js
      ├─ controllers/signaling.js
      └─ controllers/ui.js
 
-Go server
+Go 服务
   ├─ cmd/server/main.go
   └─ internal/signal/
 ```
 
-The server exposes:
+服务端暴露的关键入口：
 
-- `GET /` — static frontend
-- `GET /config.js` — runtime RTC config
-- `GET /healthz` — health probe
-- `GET /ws` — signaling socket
+- `GET /` - 前端页面
+- `GET /config.js` - 运行时 RTC 配置
+- `GET /healthz` - 健康检查
+- `GET /ws` - 信令 WebSocket
 
-## Specs and workflow
+## 规范与开发流程
 
-This repository uses **OpenSpec** as its only planning and requirements system.
+本仓库只使用 **OpenSpec** 管理需求、设计和任务。
 
-- Main specs: [`openspec/specs/`](openspec/specs/)
-- Active changes: [`openspec/changes/`](openspec/changes/)
-- Public spec guide: [`docs/specs.md`](docs/specs.md)
+- 主规范：[`openspec/specs/`](openspec/specs/)
+- 活跃变更：[`openspec/changes/`](openspec/changes/)
+- 公开规范导航：[`docs/vitepress/zh/specs.md`](docs/vitepress/zh/specs.md)
 
-Typical flow:
+推荐流程：
 
-1. propose or update an OpenSpec change
-2. implement against `proposal.md`, `design.md`, and `tasks.md`
-3. validate with repo checks
-4. review before merge
+1. 先创建或更新 OpenSpec change
+2. 按 `proposal.md`、`design.md`、`tasks.md` 实施
+3. 运行仓库校验命令
+4. 合并前做一次 review
 
-## Project structure
+## 项目结构
 
 ```text
-cmd/server/              application entrypoint
-internal/signal/         signaling hub and tests
-web/                     static frontend
-docs/                    public documentation
-openspec/                specs and change artifacts
-deploy/                  Docker, Caddy, and deployment assets
+cmd/server/              应用入口
+internal/signal/         信令核心与测试
+web/                     静态前端
+docs/                    公共文档
+openspec/                规范与变更
+deploy/                  Docker / Caddy / 部署资源
 ```
 
-## Documentation
+## 文档入口
 
-- [Docs home](docs/index.md)
-- [Technical guide](docs/guide.md)
-- [Signaling protocol](docs/signaling.md)
-- [Deployment guide](docs/deployment.md)
-- [API reference](docs/api.md)
-- [Troubleshooting](docs/troubleshooting.md)
+- [文档首页](docs/vitepress/zh/index.md)
+- [技术指南](docs/vitepress/zh/guide.md)
+- [信令协议](docs/vitepress/zh/signaling.md)
+- [部署指南](docs/vitepress/zh/deployment.md)
+- [API 参考](docs/vitepress/zh/api.md)
+- [故障排查](docs/vitepress/zh/troubleshooting.md)
 
-## Contributing
+## 参与贡献
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the active OpenSpec change. This repo prefers focused, low-noise contributions that keep the implementation, docs, and repo metadata aligned.
+请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，并以当前 OpenSpec change 为准推进工作。这个仓库更偏好聚焦、低噪音、能一次收口的改动。

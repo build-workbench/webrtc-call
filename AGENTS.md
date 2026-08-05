@@ -89,7 +89,7 @@ openspec validate --all --strict
 
 - Pages is a project site, not a README mirror.
 - `docs/vitepress/` is the VitePress source; the public site is built from there.
-- `docs/vitepress/{zh,en}/specs.md` is the public entrypoint for OpenSpec material.
+- `docs/vitepress/zh/specs.md` is the public entrypoint for OpenSpec material.
 - If a page links to specs, it should link to current `openspec/` content or to the curated public spec hub.
 - Avoid outdated module names like `web/app.js` or `app.*.js`; use the real `web/src/` structure.
 

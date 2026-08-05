@@ -45,7 +45,6 @@ jobs:
       - name: Verify build
         run: |
           test -f ../.site/index.html
-          test -f ../.site/en/index.html
           test -f ../.site/zh/index.html
 
       - name: Upload artifact
