@@ -1,64 +1,20 @@
-# Claude Code
-CLAUDE.local.md
-.claude/worktrees/
-.omc/
-
 # Build outputs
-/tmp/
 /bin/
-/build/
-/dist/
-/out/
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Go modules & tooling
-*.test
-*.coverprofile
 coverage.out
+coverage.html
 
-# Node / front-end
+# Node
 node_modules/
-web/dist/
-web/node_modules/
 
-# Logs & runtime artifacts
-*.log
-*.pid
-*.tmp
-
-# E2E test artifacts
-e2e/test-results/
-
-# Editors & IDEs
+# Editors
 .vscode/
 .idea/
-*.iml
 *.swp
 .DS_Store
-Thumbs.db
 
-# Docker
-docker-compose.override.yml
-
-# Jekyll
-_site/
-.jekyll-cache/
-.jekyll-metadata
-
-# Nextra / Next.js
-docs/website/.next/
-docs/website/node_modules/
-docs/.site/
-.next/
-
-# Environment & secrets
+# Environment
 .env
 .env.*
 *.local
-
-# TURN credentials (use turnserver.conf.example as template)
-turnserver.conf
+docs/.site/
+/server
