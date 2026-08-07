@@ -1,95 +1,430 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <title>LessUp WebRTC</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="基于 Go + WebRTC 的实时音视频通话 Demo —— 支持多人 Mesh、屏幕共享、DataChannel 聊天">
-  <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎥</text></svg>">
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WebRTC Demo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎥</text></svg>" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0b1020;color:#e6edf3;line-height:1.5;min-height:100vh}
+    .hidden{display:none!important}
+    .container{max-width:960px;margin:0 auto;padding:20px 16px}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .header h1{font-size:1.35rem;font-weight:700;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .badge{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:3px 10px;border-radius:999px;background:#1e293b;color:#94a3b8}
+    .badge--online{background:#064e3b;color:#34d399}
+    .badge--warn{background:#422006;color:#fbbf24}
+    .panel{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:24px;max-width:400px;margin:0 auto}
+    .form-row{margin-bottom:14px}
+    .form-row label{display:block;font-size:.8rem;font-weight:500;color:#94a3b8;margin-bottom:4px}
+    .form-row input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #2d3848;background:#0f1730;color:#e6edf3;font-size:.9rem}
+    .form-row input:focus{outline:none;border-color:#3b82f6}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:8px;border:none;font-size:.9rem;font-weight:500;cursor:pointer;color:#e6edf3;background:#1e293b}
+    .btn:hover{background:#334155}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn-primary{width:100%;margin-top:4px;background:linear-gradient(135deg,#2563eb,#7c3aed)}
+    .btn-primary:hover{background:linear-gradient(135deg,#1d4ed8,#6d28d9)}
+    .btn-sm{padding:8px 14px;font-size:.8rem}
+    .media-controls{display:flex;justify-content:center;gap:12px;padding:14px 0;flex-wrap:wrap}
+    .btn-icon{width:48px;height:48px;border-radius:50%;border:none;background:#1e293b;color:#e6edf3;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:20px}
+    .btn-icon:hover{background:#334155}
+    .btn-icon--danger{background:#991b1b}
+    .btn-icon--danger:hover{background:#b91c1c}
+    .btn-icon--muted{background:#92400e;color:#fbbf24}
+    .btn-icon--active{background:#1e3a5f;color:#60a5fa}
+    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .video-card{position:relative;border-radius:10px;overflow:hidden;background:#000;border:1px solid #1e293b;aspect-ratio:16/9}
+    .video-card video{width:100%;height:100%;object-fit:cover;display:block}
+    .video-card--local{border-color:#3b82f6}
+    .video-label{position:absolute;bottom:6px;left:8px;font-size:.72rem;font-weight:500;background:rgba(0,0,0,.6);color:#e6edf3;padding:2px 8px;border-radius:4px}
+    .chat{margin-top:12px;background:#111827;border:1px solid #1e293b;border-radius:10px;overflow:hidden}
+    .chat-log{padding:10px 14px;min-height:100px;max-height:200px;overflow-y:auto;font-size:.8rem;line-height:1.6;color:#cbd5e1}
+    .chat-log .msg-time{color:#475569;margin-right:6px}
+    .chat-log .msg-name{font-weight:600;color:#60a5fa}
+    .chat-log .msg-sys{color:#94a3b8;font-style:italic}
+    .chat-input{display:flex;border-top:1px solid #1e293b}
+    .chat-input input{flex:1;padding:10px 14px;border:none;background:transparent;color:#e6edf3;font-size:.85rem}
+    .chat-input input:focus{outline:none}
+    .chat-input .btn{border-radius:0}
+    .status{margin-top:16px;padding:8px 14px;border-radius:8px;font-size:.8rem;border-left:4px solid #2d3848;background:#111827}
+    .status-info{border-left-color:#3b82f6}
+    .status-ok{border-left-color:#22c55e;background:#0f2a1a}
+    .status-warn{border-left-color:#eab308;background:#2a2510}
+    .status-error{border-left-color:#ef4444;background:#2a1010}
+    @media(max-width:600px){
+      .container{padding:12px 10px}
+      .video-grid{grid-template-columns:1fr}
+      .panel{padding:18px 16px}
+      .btn-icon{width:42px;height:42px;font-size:18px}
+    }
+  </style>
 </head>
 <body>
-  <div class="app">
-    <header class="app__header">
-      <div class="brand">
-        <div class="brand__title">LessUp WebRTC</div>
-        <div class="brand__subtitle">Go WebSocket 信令 + 浏览器端 WebRTC Demo（支持聊天/屏幕共享）</div>
-      </div>
-      <div class="status">
-        <div id="status" class="status__text">未连接</div>
-        <div id="error" class="status__error"></div>
-      </div>
+  <div class="container">
+    <header class="header">
+      <h1>WebRTC Demo</h1>
+      <span class="badge" id="connBadge">离线</span>
     </header>
 
-    <div class="grid">
-      <section class="card">
-        <h2 class="card__title">房间</h2>
-        <div class="form-row">
-          <span class="label">Room</span>
-          <input id="room" class="input" placeholder="输入房间名（例如 demo）" autocomplete="off" aria-label="房间名">
-          <button id="join" class="button button--primary" aria-label="加入或离开房间">Join</button>
-        </div>
-        <div class="members">
-          <div class="members__title">在线成员（点击可填入 Remote）</div>
-          <div id="members" class="members__list"></div>
-        </div>
-        <div class="footer">
-          <span class="pill">你的 ID：<span id="myId"></span></span>
-        </div>
-      </section>
+    <section class="panel" id="joinPanel">
+      <div class="form-row">
+        <label for="room">房间</label>
+        <input id="room" placeholder="demo" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="form-row">
+        <label for="name">昵称</label>
+        <input id="name" placeholder="Alice" autocomplete="off" spellcheck="false" />
+      </div>
+      <button id="start" class="btn btn-primary">加入房间</button>
+    </section>
 
-      <section class="card">
-        <h2 class="card__title">呼叫与控制</h2>
-        <div class="form-row">
-          <span class="label">Remote</span>
-          <input id="remote" class="input" placeholder="选择成员或手动输入" autocomplete="off" aria-label="远端成员 ID">
-          <button id="call" class="button button--success" aria-label="发起通话">Call</button>
-          <button id="hangup" class="button button--danger" aria-label="挂断通话">Hangup</button>
+    <section class="panel hidden" id="callPanel" style="max-width:none">
+      <div class="video-grid" id="videoGrid">
+        <div class="video-card video-card--local">
+          <video id="local" autoplay playsinline muted></video>
+          <span class="video-label" id="localLabel">我</span>
         </div>
-        <div class="controls">
-          <button id="muteBtn" class="button" aria-label="静音切换">Mute</button>
-          <button id="cameraBtn" class="button" aria-label="摄像头切换">Camera Off</button>
-          <button id="screenBtn" class="button" aria-label="屏幕共享">Share Screen</button>
-        </div>
-        <div class="footer">
-          加入房间后，从左侧成员列表选择对端再发起呼叫。
-        </div>
-      </section>
+      </div>
 
-      <section class="card card--full">
-        <h2 class="card__title">视频</h2>
-        <div id="videos" class="videos">
-          <div class="video-tile">
-            <div class="video-tile__label">本地</div>
-            <video id="local" autoplay playsinline muted></video>
-          </div>
-        </div>
-      </section>
+      <div class="media-controls">
+        <button id="toggleMic" class="btn-icon" title="麦克风">🎤</button>
+        <button id="toggleCam" class="btn-icon" title="摄像头">📷</button>
+        <button id="shareScreen" class="btn-icon" title="屏幕共享">🖥</button>
+        <button id="leave" class="btn-icon btn-icon--danger" title="离开">📞</button>
+      </div>
 
-      <section class="card">
-        <h2 class="card__title">聊天</h2>
-        <div id="chatLog" class="chat-log" aria-live="polite"></div>
-        <div class="chat-input">
-          <input id="chatInput" class="input" placeholder="输入消息，Enter 发送" autocomplete="off">
-          <button id="chatSend" class="button button--primary">Send</button>
-        </div>
-        <div class="footer">聊天基于 WebRTC DataChannel（需先建立连接）。</div>
-      </section>
+      <div class="chat">
+        <div class="chat-log" id="chatLog"></div>
+        <form class="chat-input" id="chatForm">
+          <input id="chatText" placeholder="输入消息，Enter 发送..." autocomplete="off" />
+          <button type="submit" class="btn btn-sm">发送</button>
+        </form>
+      </div>
+    </section>
 
-      <section class="card">
-        <h2 class="card__title">使用提示</h2>
-        <div class="muted" style="font-size: 13px; line-height: 1.65;">
-          <div>1. 打开两个窗口，输入相同 Room 并 Join。</div>
-          <div>2. 点击成员 ID 自动填入 Remote，然后 Call（可对多个成员重复）。</div>
-          <div>3. 通话建立后，可聊天与屏幕共享。</div>
-        </div>
-      </section>
-    </div>
+    <div class="status" id="status">就绪</div>
   </div>
 
-  <script src="src/config.js"></script>
-  <script type="module" src="src/core/app.js"></script>
+  <script>
+    const $ = s => document.querySelector(s);
+    const myId = "u-" + Math.random().toString(36).slice(2, 10);
+    const iceServers = [{ urls: ["stun:stun.l.google.com:19302"] }];
+
+    let ws = null, roomId = null, displayName = null, localStream = null;
+    let screenStream = null, usingScreen = false;
+    let intentionalLeave = false, reconnectAttempts = 0;
+    let micEnabled = true, camEnabled = true;
+    const MAX_RECONNECT = 5;
+    const pcs = new Map();
+    const dataChannels = new Map();
+    const knownPeers = new Set();
+
+    const els = {
+      joinPanel: $("#joinPanel"), callPanel: $("#callPanel"), connBadge: $("#connBadge"),
+      status: $("#status"), chatLog: $("#chatLog"), chatForm: $("#chatForm"), chatText: $("#chatText"),
+      videoGrid: $("#videoGrid"), localVideo: $("#local"), localLabel: $("#localLabel"),
+      startBtn: $("#start"), leaveBtn: $("#leave"),
+      toggleMic: $("#toggleMic"), toggleCam: $("#toggleCam"), shareScreen: $("#shareScreen"),
+    };
+
+    function send(obj) {
+      if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+    }
+    const shortId = id => id ? id.slice(0, 8) : "???";
+    function setStatus(text, type = "info") {
+      els.status.textContent = text;
+      els.status.className = "status status-" + type;
+    }
+    function setBadge(state) {
+      const b = els.connBadge;
+      b.className = "badge";
+      if (state === "online") { b.textContent = "在线"; b.classList.add("badge--online"); }
+      else if (state === "warn") { b.textContent = "重连中"; b.classList.add("badge--warn"); }
+      else { b.textContent = "离线"; }
+    }
+    function logChat(html) {
+      const div = document.createElement("div");
+      div.innerHTML = '<span class="msg-time">' + new Date().toLocaleTimeString() + "</span>" + html;
+      els.chatLog.appendChild(div);
+      els.chatLog.scrollTop = els.chatLog.scrollHeight;
+    }
+    const logSystem = t => logChat('<span class="msg-sys">' + t + "</span>");
+    const logMessage = (name, text) => logChat('<span class="msg-name">' + name + ":</span> " + text.replace(/</g, "&lt;"));
+
+    function ensureVideoCard(peerId) {
+      const cid = "vc-" + peerId;
+      let card = document.getElementById(cid);
+      if (card) return card.querySelector("video");
+      card = document.createElement("div");
+      card.id = cid;
+      card.className = "video-card";
+      const video = document.createElement("video");
+      video.autoplay = true;
+      video.playsInline = true;
+      const label = document.createElement("span");
+      label.className = "video-label";
+      label.textContent = shortId(peerId);
+      card.appendChild(video);
+      card.appendChild(label);
+      els.videoGrid.appendChild(card);
+      return video;
+    }
+    function removeVideoCard(peerId) {
+      const c = document.getElementById("vc-" + peerId);
+      if (c) c.remove();
+    }
+
+    function createPC(peerId) {
+      const pc = new RTCPeerConnection({ iceServers });
+      pcs.set(peerId, pc);
+      const stream = usingScreen && screenStream ? screenStream : localStream;
+      if (stream) stream.getTracks().forEach(t => pc.addTrack(t, stream));
+      pc.ontrack = ev => { ensureVideoCard(peerId).srcObject = ev.streams[0]; };
+      pc.onicecandidate = ev => {
+        if (ev.candidate) send({ type: "candidate", to: peerId, candidate: ev.candidate });
+      };
+      pc.ondatachannel = ev => setupDataChannel(peerId, ev.channel);
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "failed") logSystem("与 " + shortId(peerId) + " 的连接失败");
+        if (pc.connectionState === "disconnected") logSystem("与 " + shortId(peerId) + " 的连接中断");
+      };
+      return pc;
+    }
+
+    function setupDataChannel(peerId, channel) {
+      dataChannels.set(peerId, channel);
+      channel.onopen = () => logSystem("聊天通道已建立: " + shortId(peerId));
+      channel.onmessage = ev => logMessage(shortId(peerId), ev.data);
+      channel.onclose = () => logSystem("聊天通道已关闭: " + shortId(peerId));
+    }
+
+    async function negotiate(peerId) {
+      const pc = pcs.get(peerId) || createPC(peerId);
+      const dc = pc.createDataChannel("chat");
+      setupDataChannel(peerId, dc);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      send({ type: "offer", to: peerId, sdp: offer.sdp });
+    }
+
+    function closePeer(peerId) {
+      const pc = pcs.get(peerId);
+      if (pc) { pc.close(); pcs.delete(peerId); }
+      dataChannels.delete(peerId);
+      removeVideoCard(peerId);
+    }
+
+    function cleanupAllPeers() {
+      for (const pid of pcs.keys()) closePeer(pid);
+      knownPeers.clear();
+    }
+
+    function handleMembers(members) {
+      const current = new Set(members.filter(id => id && id !== myId));
+      for (const pid of current) {
+        if (!knownPeers.has(pid)) {
+          knownPeers.add(pid);
+          if (myId < pid) negotiate(pid);
+        }
+      }
+      for (const pid of knownPeers) {
+        if (!current.has(pid)) {
+          closePeer(pid);
+          knownPeers.delete(pid);
+        }
+      }
+    }
+
+    function connectWS() {
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      ws = new WebSocket(proto + "://" + location.host + "/ws");
+
+      ws.onopen = () => {
+        reconnectAttempts = 0;
+        setStatus("已连接，加入房间...", "info");
+        send({ type: "join", room: roomId, from: myId });
+      };
+
+      ws.onmessage = async e => {
+        const m = JSON.parse(e.data);
+        switch (m.type) {
+          case "joined":
+            setBadge("online");
+            setStatus("已加入房间 " + roomId, "ok");
+            break;
+          case "room_members":
+            handleMembers(m.members || []);
+            break;
+          case "offer": {
+            const pc = pcs.get(m.from) || createPC(m.from);
+            await pc.setRemoteDescription({ type: "offer", sdp: m.sdp });
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            send({ type: "answer", to: m.from, sdp: answer.sdp });
+            break;
+          }
+          case "answer": {
+            const pc = pcs.get(m.from);
+            if (pc) await pc.setRemoteDescription({ type: "answer", sdp: m.sdp });
+            break;
+          }
+          case "candidate": {
+            const pc = pcs.get(m.from);
+            if (pc) { try { await pc.addIceCandidate(m.candidate); } catch (err) { console.warn("ICE error", err); } }
+            break;
+          }
+          case "hangup":
+            closePeer(m.from);
+            knownPeers.delete(m.from);
+            logSystem(shortId(m.from) + " 挂断");
+            break;
+          case "error":
+            logSystem("错误 [" + m.code + "]: " + m.error);
+            setStatus("错误: " + m.error, "error");
+            break;
+        }
+      };
+
+      ws.onerror = () => setStatus("连接出错", "error");
+      ws.onclose = () => {
+        setBadge("offline");
+        if (!intentionalLeave) {
+          cleanupAllPeers();
+          scheduleReconnect();
+        } else {
+          setStatus("已断开", "info");
+        }
+      };
+    }
+
+    async function scheduleReconnect() {
+      if (intentionalLeave || reconnectAttempts >= MAX_RECONNECT) {
+        if (reconnectAttempts >= MAX_RECONNECT) setStatus("重连次数已用尽，请重新加入", "error");
+        return;
+      }
+      reconnectAttempts++;
+      const delay = Math.min(1000 * 2 ** (reconnectAttempts - 1), 16000);
+      setBadge("warn");
+      setStatus("断线重连中... 第" + reconnectAttempts + "/" + MAX_RECONNECT + "次（" + delay / 1000 + "s）", "warn");
+      await new Promise(r => setTimeout(r, delay));
+      if (intentionalLeave) return;
+      try { connectWS(); }
+      catch (e) { logSystem("重连失败: " + e.message); scheduleReconnect(); }
+    }
+
+    function toggleMic() {
+      if (!localStream) return;
+      micEnabled = !micEnabled;
+      localStream.getAudioTracks().forEach(t => t.enabled = micEnabled);
+      els.toggleMic.textContent = micEnabled ? "🎤" : "🔇";
+      els.toggleMic.classList.toggle("btn-icon--muted", !micEnabled);
+    }
+    function toggleCam() {
+      if (!localStream) return;
+      camEnabled = !camEnabled;
+      localStream.getVideoTracks().forEach(t => t.enabled = camEnabled);
+      els.toggleCam.textContent = camEnabled ? "📷" : "🚫";
+      els.toggleCam.classList.toggle("btn-icon--muted", !camEnabled);
+    }
+
+    async function toggleScreenShare() {
+      if (usingScreen) { stopScreenShare(); return; }
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        usingScreen = true;
+        els.shareScreen.classList.add("btn-icon--active");
+        const track = screenStream.getVideoTracks()[0];
+        track.onended = stopScreenShare;
+        els.localVideo.srcObject = screenStream;
+        for (const pc of pcs.values()) {
+          const sender = pc.getSenders().find(s => s.track && s.track.kind === "video");
+          if (sender) await sender.replaceTrack(track);
+        }
+        logSystem("已开启屏幕共享");
+      } catch (e) {
+        logSystem("屏幕共享失败: " + e.message);
+      }
+    }
+    function stopScreenShare() {
+      if (!screenStream) return;
+      screenStream.getTracks().forEach(t => t.stop());
+      screenStream = null;
+      usingScreen = false;
+      els.shareScreen.classList.remove("btn-icon--active");
+      if (localStream) els.localVideo.srcObject = localStream;
+      for (const pc of pcs.values()) {
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === "video");
+        if (sender && localStream) {
+          const camTrack = localStream.getVideoTracks()[0];
+          if (camTrack) sender.replaceTrack(camTrack);
+        }
+      }
+      logSystem("已停止屏幕共享");
+    }
+
+    async function start() {
+      roomId = $("#room").value.trim() || "demo";
+      displayName = $("#name").value.trim() || "Guest";
+      intentionalLeave = false;
+      reconnectAttempts = 0;
+      micEnabled = true;
+      camEnabled = true;
+      els.toggleMic.textContent = "🎤";
+      els.toggleCam.textContent = "📷";
+      els.toggleMic.classList.remove("btn-icon--muted");
+      els.toggleCam.classList.remove("btn-icon--muted");
+      els.startBtn.disabled = true;
+      setStatus("获取媒体设备...", "info");
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        els.localVideo.srcObject = localStream;
+      } catch {
+        logSystem("摄像头/麦克风获取失败，将以纯信令模式运行");
+      }
+      els.localLabel.textContent = displayName;
+      setStatus("连接服务器...", "info");
+      connectWS();
+      els.joinPanel.classList.add("hidden");
+      els.callPanel.classList.remove("hidden");
+    }
+
+    function leave() {
+      intentionalLeave = true;
+      if (ws && ws.readyState === WebSocket.OPEN) { send({ type: "leave" }); ws.close(); }
+      if (usingScreen) stopScreenShare();
+      cleanupAllPeers();
+      if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+      els.localVideo.srcObject = null;
+      els.chatLog.innerHTML = "";
+      setBadge("offline");
+      els.callPanel.classList.add("hidden");
+      els.joinPanel.classList.remove("hidden");
+      els.startBtn.disabled = false;
+      setStatus("已离开房间", "info");
+    }
+
+    function sendChat() {
+      const text = els.chatText.value.trim();
+      if (!text) return;
+      let sent = false;
+      for (const dc of dataChannels.values()) {
+        if (dc.readyState === "open") { dc.send(text); sent = true; }
+      }
+      if (sent) logMessage("我", text);
+      else logSystem("聊天通道未建立，请等待连接完成");
+      els.chatText.value = "";
+    }
+
+    els.startBtn.addEventListener("click", () =>
+      start().catch(e => { setStatus(e.message, "error"); els.startBtn.disabled = false; })
+    );
+    els.leaveBtn.addEventListener("click", leave);
+    els.toggleMic.addEventListener("click", toggleMic);
+    els.toggleCam.addEventListener("click", toggleCam);
+    els.shareScreen.addEventListener("click", toggleScreenShare);
+    els.chatForm.addEventListener("submit", e => { e.preventDefault(); sendChat(); });
+    window.addEventListener("beforeunload", leave);
+  </script>
 </body>
 </html>
