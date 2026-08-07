@@ -2,23 +2,17 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strings"
+	"os/signal"
 	"syscall"
 	"time"
 
 	sig "github.com/LessUp/webrtc/internal/signal"
 )
-
-type appConfig struct {
-	RTCConfig json.RawMessage `json:"rtcConfig,omitempty"`
-}
 
 func parseOrigins(raw string) (origins []string, allowAll bool) {
 	if raw == "" {
@@ -27,9 +21,7 @@ func parseOrigins(raw string) (origins []string, allowAll bool) {
 	if raw == "*" {
 		return nil, true
 	}
-	parts := strings.Split(raw, ",")
-	origins = make([]string, 0, len(parts))
-	for _, p := range parts {
+	for _, p := range strings.Split(raw, ",") {
 		if p = strings.TrimSpace(p); p != "" {
 			origins = append(origins, p)
 		}
@@ -37,42 +29,12 @@ func parseOrigins(raw string) (origins []string, allowAll bool) {
 	return origins, false
 }
 
-func loadAppConfig() appConfig {
-	raw := strings.TrimSpace(os.Getenv("RTC_CONFIG_JSON"))
-	if raw == "" {
-		return appConfig{}
-	}
-	if !json.Valid([]byte(raw)) {
-		log.Printf("server: ignoring invalid RTC_CONFIG_JSON")
-		return appConfig{}
-	}
-	return appConfig{RTCConfig: json.RawMessage(raw)}
-}
-
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
-		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		next.ServeHTTP(w, r)
 	})
-}
-
-func configJSHandler(cfg appConfig) http.HandlerFunc {
-	payload, err := json.Marshal(cfg)
-	if err != nil {
-		log.Printf("server: marshal config failed: %v", err)
-		payload = []byte("{}")
-	}
-	body := fmt.Sprintf("window.__APP_CONFIG__ = %s;\n", payload)
-
-	return func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-		if _, err := io.WriteString(w, body); err != nil {
-			log.Printf("server: config.js write error: %v", err)
-		}
-	}
 }
 
 func main() {
@@ -82,8 +44,6 @@ func main() {
 	}
 
 	wsAllowed, wsAllowAll := parseOrigins(os.Getenv("WS_ALLOWED_ORIGINS"))
-	appCfg := loadAppConfig()
-
 	hub := sig.NewHubWithOptions(sig.Options{
 		AllowedOrigins:  wsAllowed,
 		AllowAllOrigins: wsAllowAll,
@@ -91,7 +51,6 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", hub.HandleWS)
-	mux.HandleFunc("/config.js", configJSHandler(appCfg))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		if hub.IsClosed() {
@@ -112,7 +71,6 @@ func main() {
 		IdleTimeout:       60 * time.Second,
 	}
 
-	// Graceful shutdown on SIGINT / SIGTERM.
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 

@@ -10,7 +10,7 @@ type ProtocolError struct {
 func (e *ProtocolError) Error() string { return e.Message }
 
 // 信令协议错误定义
-// 这些错误码与 openspec/specs/signaling/spec.md 中定义的错误码保持同步。
+// 错误码与前端 index.html 中的 error 处理对应。
 var (
 	// 客户端身份相关错误
 	ErrInvalidID      = &ProtocolError{Code: "invalid_id", Message: "invalid client id"}
