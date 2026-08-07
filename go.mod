@@ -1,4 +1,4 @@
-module github.com/LessUp/webrtc
+module github.com/vibe-knight/webrtc-demo
 
 go 1.22
 

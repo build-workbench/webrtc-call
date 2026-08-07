@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	sig "github.com/LessUp/webrtc/internal/signal"
+	sig "github.com/vibe-knight/webrtc-demo/internal/signal"
 )
 
 func parseOrigins(raw string) (origins []string, allowAll bool) {
