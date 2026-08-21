@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2.1.0 (2026-08-21)
+
+重新定位为个人练手业余项目：
+
+- README 更新定位说明，明确非生产用途与已知局限
+- LICENSE 版权署名改为 vibe-knight
+- 后端注释统一为中文
+- 清理工程残留（Dockerfile Go 版本对齐 go.mod、.gitignore/.dockerignore 移除已删除目录引用）
+
 ## 2.0.0 (2026-08-07)
 
 重构为轻量单文件架构：

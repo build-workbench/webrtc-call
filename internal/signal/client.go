@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Client represents a connected WebSocket client.
+// Client 表示一个已连接的 WebSocket 客户端。
 type Client struct {
 	mu        sync.RWMutex
 	id        string
@@ -19,20 +19,20 @@ type Client struct {
 	send      chan Message
 	closed    chan struct{}
 	closeOnce sync.Once
-	// Rate limiting
+	// 速率限制
 	msgCount    int
 	msgWindow   time.Time
 	rateLimited bool
 }
 
-// identity returns the client's ID and room.
+// identity 返回客户端的 ID 与房间。
 func (c *Client) identity() (userID, userRoom string) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.id, c.room
 }
 
-// setIdentity sets the client's ID and room.
+// setIdentity 设置客户端的 ID 与房间。
 func (c *Client) setIdentity(id, room string) {
 	c.mu.Lock()
 	c.id = id
@@ -40,22 +40,22 @@ func (c *Client) setIdentity(id, room string) {
 	c.mu.Unlock()
 }
 
-// setRoom sets the client's room.
+// setRoom 设置客户端的房间。
 func (c *Client) setRoom(room string) {
 	c.mu.Lock()
 	c.room = room
 	c.mu.Unlock()
 }
 
-// checkRateLimit implements token bucket rate limiting.
-// Returns true if the message should be allowed, false if rate limited.
-// Allows burst up to RateLimitBurst (50), then enforces MaxMessagesPerSecond (30/sec).
+// checkRateLimit 实现令牌桶速率限制。
+// 若消息应被放行返回 true,被限速则返回 false。
+// 允许最多 RateLimitBurst(50)条突发,之后强制 MaxMessagesPerSecond(每秒 30 条)。
 func (c *Client) checkRateLimit() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	now := time.Now()
-	// Reset window if more than 1 second has passed
+	// 若超过 1 秒则重置统计窗口
 	if now.Sub(c.msgWindow) >= time.Second {
 		c.msgWindow = now
 		c.msgCount = 0
@@ -64,7 +64,7 @@ func (c *Client) checkRateLimit() bool {
 
 	c.msgCount++
 
-	// First check: absolute burst limit (hard cap at 50)
+	// 第一重检查:绝对突发上限(硬上限 50)
 	if c.msgCount > RateLimitBurst {
 		if !c.rateLimited {
 			c.rateLimited = true
@@ -73,8 +73,8 @@ func (c *Client) checkRateLimit() bool {
 		return false
 	}
 
-	// Second check: per-second rate limit after initial burst window
-	// Only enforce if we're past the burst allowance (30) within the first second
+	// 第二重检查:首秒突发窗口之后的每秒速率限制
+	// 仅当首秒内已超过突发配额(30)时强制执行
 	if c.msgCount > MaxMessagesPerSecond && now.Sub(c.msgWindow) < time.Second {
 		if !c.rateLimited {
 			c.rateLimited = true
@@ -86,13 +86,13 @@ func (c *Client) checkRateLimit() bool {
 	return true
 }
 
-// sendError sends an error message to the client.
+// sendError 向客户端发送错误消息。
 func (c *Client) sendError(err *ProtocolError) error {
 	_, room := c.identity()
 	return c.enqueue(Message{Type: MsgTypeError, Room: room, Code: err.Code, Error: err.Message})
 }
 
-// sendErrorAndLog sends an error message to the client and logs if sending fails.
+// sendErrorAndLog 向客户端发送错误消息;若发送失败则记录日志。
 func (c *Client) sendErrorAndLog(err *ProtocolError) error {
 	sendErr := c.sendError(err)
 	if sendErr != nil {
@@ -101,7 +101,7 @@ func (c *Client) sendErrorAndLog(err *ProtocolError) error {
 	return sendErr
 }
 
-// enqueue queues a message for sending to the client.
+// enqueue 将消息排队,待发送给客户端。
 func (c *Client) enqueue(msg Message) error {
 	select {
 	case <-c.closed:
@@ -116,7 +116,7 @@ func (c *Client) enqueue(msg Message) error {
 		timer.Stop()
 		return errClientClosed
 	case c.send <- msg:
-		// Drain timer to prevent resource leak
+		// 排空定时器,防止资源泄漏
 		if !timer.Stop() {
 			select {
 			case <-timer.C:
@@ -129,7 +129,7 @@ func (c *Client) enqueue(msg Message) error {
 	}
 }
 
-// close closes the client's WebSocket connection.
+// close 关闭客户端的 WebSocket 连接。
 func (c *Client) close() {
 	c.closeOnce.Do(func() {
 		close(c.closed)
@@ -145,7 +145,7 @@ func (c *Client) close() {
 	})
 }
 
-// writePump handles sending messages to the WebSocket connection.
+// writePump 负责向 WebSocket 连接发送消息。
 func (c *Client) writePump() {
 	ticker := time.NewTicker(PingPeriod)
 	defer ticker.Stop()

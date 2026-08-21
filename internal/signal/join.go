@@ -6,7 +6,7 @@ import (
 	"unicode"
 )
 
-// handleJoin processes a join request.
+// handleJoin 处理加入房间的请求。
 func (h *Hub) handleJoin(c *Client, msg Message) error {
 	id := normalizeClientID(msg.From, MaxClientIDLength)
 	if id == "" {
@@ -31,7 +31,7 @@ func (h *Hub) handleJoin(c *Client, msg Message) error {
 
 	c.setIdentity(id, room)
 	if err := h.addClient(c); err != nil {
-		c.setIdentity("", "") // Clear both id and room on failure
+		c.setIdentity("", "") // 失败时清空 ID 与房间
 		_ = c.sendErrorAndLog(err)
 		return err
 	}
@@ -42,8 +42,8 @@ func (h *Hub) handleJoin(c *Client, msg Message) error {
 	return nil
 }
 
-// normalizeClientID validates and normalizes a client ID.
-// Returns empty string if invalid.
+// normalizeClientID 校验并规范化客户端 ID。
+// 非法时返回空字符串。
 func normalizeClientID(raw string, maxLen int) string {
 	trimmed := strings.TrimSpace(raw)
 	if trimmed == "" || len(trimmed) > maxLen {
@@ -62,8 +62,8 @@ func normalizeClientID(raw string, maxLen int) string {
 	return trimmed
 }
 
-// normalizeRoomName validates and normalizes a room name.
-// Returns empty string if invalid.
+// normalizeRoomName 校验并规范化房间名。
+// 非法时返回空字符串。
 func normalizeRoomName(raw string, maxLen int) string {
 	trimmed := strings.TrimSpace(raw)
 	if trimmed == "" || len(trimmed) > maxLen {

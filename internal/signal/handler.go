@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// HandleWS handles WebSocket connection upgrades and message processing.
+// HandleWS 处理 WebSocket 连接升级与消息处理。
 func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 	conn, err := h.upg.Upgrade(w, r, nil)
 	if err != nil {
@@ -62,9 +62,9 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleMessage routes incoming messages to appropriate handlers.
+// handleMessage 将收到的消息路由到对应的处理函数。
 func (h *Hub) handleMessage(client *Client, msg Message) error {
-	// Rate limit check
+	// 速率限制检查
 	if !client.checkRateLimit() {
 		_ = client.sendErrorAndLog(ErrRateLimited)
 		return errors.New("rate limited")

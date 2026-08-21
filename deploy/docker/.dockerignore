@@ -5,21 +5,12 @@
 # GitHub
 .github
 
-# Documentation
+# 文档
 *.md
-docs/
-specs/
 
-# Testing
-e2e/
-web/tests/
+# 测试产物
 .coverage.out
 coverage.html
 
-# Development
+# 环境变量
 .env
-.air.toml
-Makefile
-
-# CI/CD (not needed in build)
-.github/workflows/*.yml

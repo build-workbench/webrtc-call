@@ -1,6 +1,19 @@
 # WebRTC Demo
 
-基于 Go WebSocket 信令 + 浏览器原生 WebRTC 的音视频通话演示项目。
+基于 Go WebSocket 信令 + 浏览器原生 WebRTC 的音视频通话项目，个人练手业余作品。
+
+## 关于本项目
+
+这是我的业余练手项目，用来学习 WebRTC 和 Go：
+
+- 后端用 Go + gorilla/websocket 写一个最小的信令服务（房间管理、消息路由）
+- 前端用原生 JavaScript 写单页应用，浏览器间直接建立 P2P 连接
+
+**这不是一个面向生产的产品**，也没打算做成教程。代码按自己看得懂、跑得起来的原则组织，可能有疏漏和简化。当前已知局限：
+
+- 未接入 TURN 服务器，仅适合本机或局域网环境
+- 前端为单文件实现，无构建工具、无框架
+- 支持 1v1 及小规模 Mesh 多人通话，规模上限取决于浏览器连接数
 
 ## 特性
 
@@ -50,7 +63,7 @@ WebSocket 连接 `GET /ws`，消息为 JSON，结构取决于 `type` 字段。
 ```
 cmd/server/main.go     Go 入口
 internal/signal/       信令核心（Hub、消息路由、房间管理）
-web/index.html         单文件前端 demo
+web/index.html         单文件前端
 deploy/docker/         Docker 部署
 ```
 

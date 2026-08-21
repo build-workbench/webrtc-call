@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-// forward routes signaling messages between clients.
+// forward 在客户端之间路由信令消息。
 func (h *Hub) forward(sender *Client, msg Message) error {
 	id, room := sender.identity()
 	if id == "" || room == "" {

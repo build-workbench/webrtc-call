@@ -153,7 +153,7 @@ func TestNormalizeClientIDWithMaxClientIDLength(t *testing.T) {
 		expected string
 	}{
 		{"valid id", "user123", "user123"},
-		{"too long", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ""}, // 65 chars
+		{"too long", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ""}, // 65 个字符
 	}
 
 	for _, tt := range tests {
@@ -174,7 +174,7 @@ func TestNormalizeRoomNameWithMaxRoomIDLength(t *testing.T) {
 		expected string
 	}{
 		{"valid room", "room1", "room1"},
-		{"too long", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ""}, // 65 chars
+		{"too long", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ""}, // 65 个字符
 	}
 
 	for _, tt := range tests {

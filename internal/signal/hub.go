@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Limits to prevent resource exhaustion
+// 资源消耗上限,防止服务被拖垮
 const (
 	MaxRooms          = 1000
 	MaxClientsPerRoom = 50
@@ -26,20 +26,20 @@ const (
 	PongWait          = 20 * time.Second
 	PingPeriod        = 15 * time.Second
 	MaxMessageSize    = 1 << 20
-	// Rate limiting: max messages per second per client
+	// 速率限制:每客户端每秒最大消息数
 	MaxMessagesPerSecond = 30
 	RateLimitBurst       = 50
 )
 
 var errClientClosed = errors.New("client closed")
 
-// Options configures Hub behavior.
+// Options 配置 Hub 的行为。
 type Options struct {
 	AllowedOrigins  []string
 	AllowAllOrigins bool
 }
 
-// Hub manages rooms and routes signaling messages between clients.
+// Hub 管理房间,并在客户端之间路由信令消息。
 type Hub struct {
 	mu      sync.RWMutex
 	rooms   map[string]map[string]*Client
@@ -52,7 +52,7 @@ type Hub struct {
 	nextConnID      atomic.Uint64
 }
 
-// NewHubWithOptions creates a new Hub with custom options.
+// NewHubWithOptions 使用自定义选项创建新的 Hub。
 func NewHubWithOptions(opts Options) *Hub {
 	h := &Hub{
 		rooms:           make(map[string]map[string]*Client),
@@ -68,7 +68,7 @@ func NewHubWithOptions(opts Options) *Hub {
 	return h
 }
 
-// registerClient adds a client to the hub's client registry.
+// registerClient 将客户端加入 Hub 的客户端注册表。
 func (h *Hub) registerClient(c *Client) bool {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -79,14 +79,14 @@ func (h *Hub) registerClient(c *Client) bool {
 	return true
 }
 
-// unregisterClient removes a client from the hub's client registry.
+// unregisterClient 从 Hub 的客户端注册表中移除客户端。
 func (h *Hub) unregisterClient(c *Client) {
 	h.mu.Lock()
 	delete(h.clients, c)
 	h.mu.Unlock()
 }
 
-// addClient adds a client to a room.
+// addClient 将客户端加入房间。
 func (h *Hub) addClient(c *Client) *ProtocolError {
 	id, room := c.identity()
 	h.mu.Lock()
@@ -119,7 +119,7 @@ func (h *Hub) addClient(c *Client) *ProtocolError {
 	return nil
 }
 
-// removeClient removes a client from its room.
+// removeClient 将客户端从其所在房间移除。
 func (h *Hub) removeClient(c *Client) {
 	id, room := c.identity()
 	if room == "" || id == "" {
@@ -152,7 +152,7 @@ func (h *Hub) removeClient(c *Client) {
 	}
 }
 
-// broadcastMembers sends the member list to all clients in a room.
+// broadcastMembers 向房间内所有客户端广播成员列表。
 func (h *Hub) broadcastMembers(room string) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -162,7 +162,7 @@ func (h *Hub) broadcastMembers(room string) {
 		return
 	}
 
-	// Single critical section snapshot: capture both member IDs and client pointers
+	// 单个临界区快照:同时捕获成员 ID 与客户端指针
 	members := make([]string, 0, len(m))
 	recipients := make([]*Client, 0, len(m))
 	for id, cli := range m {
@@ -177,18 +177,18 @@ func (h *Hub) broadcastMembers(room string) {
 		Members: members,
 	}
 
-	// Send to all recipients while still holding lock (enqueue is non-blocking)
+	// 持锁期间向所有接收方发送(enqueue 为非阻塞)
 	for _, cli := range recipients {
 		if err := cli.enqueue(msg); err != nil {
 			log.Printf("signal: members broadcast failed room=%s conn=%d: %v", room, cli.connID, err)
-			// Remove client asynchronously to avoid deadlock
+			// 异步移除客户端以避免死锁
 			go h.removeClient(cli)
 			go cli.close()
 		}
 	}
 }
 
-// Close shuts down the hub and disconnects all clients.
+// Close 关闭 Hub 并断开所有客户端连接。
 func (h *Hub) Close() {
 	h.mu.Lock()
 	if h.closed {
@@ -209,14 +209,14 @@ func (h *Hub) Close() {
 	}
 }
 
-// IsClosed returns true if the hub has been closed.
+// IsClosed 返回 Hub 是否已关闭。
 func (h *Hub) IsClosed() bool {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.closed
 }
 
-// isOriginAllowed checks if a request's origin is permitted.
+// isOriginAllowed 检查请求的 Origin 是否被允许。
 func (h *Hub) isOriginAllowed(r *http.Request) bool {
 	if h.allowAllOrigins {
 		return true
@@ -224,7 +224,7 @@ func (h *Hub) isOriginAllowed(r *http.Request) bool {
 	origin := r.Header.Get("Origin")
 	if origin == "" {
 		host := r.Host
-		// Check for localhost with proper host:port matching
+		// 检查是否为 localhost(正确处理 host:port)
 		if isLocalhostHost(host) {
 			return true
 		}
@@ -245,9 +245,9 @@ func (h *Hub) isOriginAllowed(r *http.Request) bool {
 	return false
 }
 
-// isLocalhostHost checks if a host string (with or without :port) refers to localhost.
+// isLocalhostHost 判断主机字符串(带或不带 :port)是否指向 localhost。
 func isLocalhostHost(host string) bool {
-	// Strip port if present
+	// 去掉端口(若存在)
 	if h, _, err := net.SplitHostPort(host); err == nil {
 		host = h
 	}
