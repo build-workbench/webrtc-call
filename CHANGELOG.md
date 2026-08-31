@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2.2.0 (2026-08-31)
+
+仓库更名为 webrtc-call，重新定位为浏览器端通话客户端：
+
+- 仓库名与模块路径由 webrtc-demo 改为 webrtc-call，与姊妹项目 webrtc-signaling 形成「前端通话客户端 ↔ 后端信令服务」的对照
+- README 更新定位说明并补充姊妹项目对照
+- 前端标题更新为 WebRTC Call
+
 ## 2.1.0 (2026-08-21)
 
 重新定位为个人练手业余项目：
