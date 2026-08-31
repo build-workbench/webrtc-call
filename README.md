@@ -1,6 +1,6 @@
-# WebRTC Demo
+# WebRTC Call
 
-基于 Go WebSocket 信令 + 浏览器原生 WebRTC 的音视频通话项目，个人练手业余作品。
+浏览器端原生 WebRTC 音视频通话（1v1 / Mesh 多人）项目，配套 Go WebSocket 信令，个人练手业余作品。与后端工程化信令服务 [webrtc-signaling](https://github.com/build-workbench/webrtc-signaling) 形成「前端通话客户端 ↔ 后端信令服务」的对照。
 
 ## 关于本项目
 

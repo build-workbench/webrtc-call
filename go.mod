@@ -1,4 +1,4 @@
-module github.com/vibe-knight/webrtc-demo
+module github.com/vibe-knight/webrtc-call
 
 go 1.22
 
