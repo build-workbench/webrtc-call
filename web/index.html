@@ -4,70 +4,84 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WebRTC Call</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎥</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='14' height='12' x='2' y='6' rx='2'/><path d='m22 8-6 4 6 4V8Z'/></svg>" />
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0b1020;color:#e6edf3;line-height:1.5;min-height:100vh}
+    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#f6f8fc 0%,#eef2f7 45%,#e9eef6 100%);color:#1f2937;line-height:1.5;min-height:100vh}
     .hidden{display:none!important}
-    .container{max-width:960px;margin:0 auto;padding:20px 16px}
-    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-    .header h1{font-size:1.35rem;font-weight:700;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .badge{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:3px 10px;border-radius:999px;background:#1e293b;color:#94a3b8}
-    .badge--online{background:#064e3b;color:#34d399}
-    .badge--warn{background:#422006;color:#fbbf24}
-    .panel{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:24px;max-width:400px;margin:0 auto}
-    .form-row{margin-bottom:14px}
-    .form-row label{display:block;font-size:.8rem;font-weight:500;color:#94a3b8;margin-bottom:4px}
-    .form-row input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #2d3848;background:#0f1730;color:#e6edf3;font-size:.9rem}
-    .form-row input:focus{outline:none;border-color:#3b82f6}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:8px;border:none;font-size:.9rem;font-weight:500;cursor:pointer;color:#e6edf3;background:#1e293b}
-    .btn:hover{background:#334155}
+    .container{max-width:960px;margin:0 auto;padding:24px 16px 40px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.35)}
+    .brand-logo svg{width:20px;height:20px}
+    .brand h1{font-size:1.35rem;font-weight:700;background:linear-gradient(135deg,#2563eb,#7c3aed);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .badge{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:4px 12px;border-radius:999px;background:#e2e8f0;color:#64748b}
+    .badge--online{background:#d1fae5;color:#047857}
+    .badge--warn{background:#fef3c7;color:#b45309}
+    .panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:28px;max-width:400px;margin:0 auto;box-shadow:0 10px 30px rgba(15,23,42,.07)}
+    .join-icon{width:56px;height:56px;margin:0 auto 18px;border-radius:16px;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 8px 20px rgba(37,99,235,.3)}
+    .join-icon svg{width:26px;height:26px}
+    .form-row{margin-bottom:16px}
+    .form-row label{display:block;font-size:.8rem;font-weight:600;color:#64748b;margin-bottom:6px}
+    .form-row input{width:100%;padding:11px 14px;border-radius:10px;border:1px solid #d1d5db;background:#f8fafc;color:#1f2937;font-size:.9rem;transition:border-color .15s,box-shadow .15s}
+    .form-row input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+    .form-row input::placeholder{color:#9ca3af}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:10px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;color:#334155;background:#f1f5f9;transition:background .15s,box-shadow .15s}
+    .btn:hover{background:#e2e8f0}
     .btn:disabled{opacity:.45;cursor:not-allowed}
-    .btn-primary{width:100%;margin-top:4px;background:linear-gradient(135deg,#2563eb,#7c3aed)}
+    .btn-primary{width:100%;margin-top:6px;color:#fff;background:linear-gradient(135deg,#2563eb,#7c3aed);box-shadow:0 4px 14px rgba(37,99,235,.28)}
     .btn-primary:hover{background:linear-gradient(135deg,#1d4ed8,#6d28d9)}
-    .btn-sm{padding:8px 14px;font-size:.8rem}
-    .media-controls{display:flex;justify-content:center;gap:12px;padding:14px 0;flex-wrap:wrap}
-    .btn-icon{width:48px;height:48px;border-radius:50%;border:none;background:#1e293b;color:#e6edf3;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:20px}
-    .btn-icon:hover{background:#334155}
-    .btn-icon--danger{background:#991b1b}
-    .btn-icon--danger:hover{background:#b91c1c}
-    .btn-icon--muted{background:#92400e;color:#fbbf24}
-    .btn-icon--active{background:#1e3a5f;color:#60a5fa}
-    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-    .video-card{position:relative;border-radius:10px;overflow:hidden;background:#000;border:1px solid #1e293b;aspect-ratio:16/9}
+    .btn-sm{padding:8px 16px;font-size:.8rem}
+    .media-controls{display:flex;justify-content:center;gap:14px;padding:18px 0;flex-wrap:wrap}
+    .btn-icon{width:50px;height:50px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(15,23,42,.08);transition:transform .15s,background .15s,box-shadow .15s}
+    .btn-icon:hover{background:#f1f5f9;transform:translateY(-2px)}
+    .btn-icon svg{width:22px;height:22px}
+    .btn-icon--danger{background:#ef4444;border-color:#ef4444;color:#fff}
+    .btn-icon--danger:hover{background:#dc2626}
+    .btn-icon--muted{background:#fef3c7;border-color:#fcd34d;color:#b45309}
+    .btn-icon--muted:hover{background:#fde68a}
+    .btn-icon--active{background:#dbeafe;border-color:#93c5fd;color:#2563eb}
+    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+    .video-card{position:relative;border-radius:14px;overflow:hidden;background:#0f172a;border:1px solid #0f172a;aspect-ratio:16/9;box-shadow:0 6px 18px rgba(15,23,42,.16)}
     .video-card video{width:100%;height:100%;object-fit:cover;display:block}
     .video-card--local{border-color:#3b82f6}
-    .video-label{position:absolute;bottom:6px;left:8px;font-size:.72rem;font-weight:500;background:rgba(0,0,0,.6);color:#e6edf3;padding:2px 8px;border-radius:4px}
-    .chat{margin-top:12px;background:#111827;border:1px solid #1e293b;border-radius:10px;overflow:hidden}
-    .chat-log{padding:10px 14px;min-height:100px;max-height:200px;overflow-y:auto;font-size:.8rem;line-height:1.6;color:#cbd5e1}
-    .chat-log .msg-time{color:#475569;margin-right:6px}
-    .chat-log .msg-name{font-weight:600;color:#60a5fa}
+    .video-label{position:absolute;bottom:8px;left:10px;font-size:.72rem;font-weight:600;background:rgba(2,6,23,.65);color:#fff;padding:3px 10px;border-radius:999px;backdrop-filter:blur(4px)}
+    .chat{margin-top:14px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 6px 18px rgba(15,23,42,.05)}
+    .chat-log{padding:12px 16px;min-height:100px;max-height:200px;overflow-y:auto;font-size:.82rem;line-height:1.7;color:#334155;background:#f8fafc}
+    .chat-log .msg-time{color:#94a3b8;margin-right:8px;font-size:.72rem}
+    .chat-log .msg-name{font-weight:600;color:#2563eb}
     .chat-log .msg-sys{color:#94a3b8;font-style:italic}
-    .chat-input{display:flex;border-top:1px solid #1e293b}
-    .chat-input input{flex:1;padding:10px 14px;border:none;background:transparent;color:#e6edf3;font-size:.85rem}
+    .chat-input{display:flex;border-top:1px solid #e5e7eb}
+    .chat-input input{flex:1;padding:11px 16px;border:none;background:transparent;color:#1f2937;font-size:.85rem}
     .chat-input input:focus{outline:none}
-    .chat-input .btn{border-radius:0}
-    .status{margin-top:16px;padding:8px 14px;border-radius:8px;font-size:.8rem;border-left:4px solid #2d3848;background:#111827}
-    .status-info{border-left-color:#3b82f6}
-    .status-ok{border-left-color:#22c55e;background:#0f2a1a}
-    .status-warn{border-left-color:#eab308;background:#2a2510}
-    .status-error{border-left-color:#ef4444;background:#2a1010}
+    .chat-input input::placeholder{color:#9ca3af}
+    .chat-input .btn{border-radius:0;background:#2563eb;color:#fff}
+    .chat-input .btn:hover{background:#1d4ed8}
+    .status{margin-top:16px;padding:10px 14px;border-radius:10px;font-size:.8rem;border-left:4px solid #cbd5e1;background:#fff;box-shadow:0 4px 12px rgba(15,23,42,.06)}
+    .status-info{border-left-color:#3b82f6;background:#eff6ff}
+    .status-ok{border-left-color:#16a34a;background:#f0fdf4}
+    .status-warn{border-left-color:#ca8a04;background:#fffbeb}
+    .status-error{border-left-color:#dc2626;background:#fef2f2}
     @media(max-width:600px){
-      .container{padding:12px 10px}
+      .container{padding:16px 10px}
       .video-grid{grid-template-columns:1fr}
-      .panel{padding:18px 16px}
-      .btn-icon{width:42px;height:42px;font-size:18px}
+      .panel{padding:22px 16px}
+      .btn-icon{width:44px;height:44px}
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header class="header">
-      <h1>WebRTC Call</h1>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="12" x="2" y="6" rx="2"/><path d="m22 8-6 4 6 4V8Z"/></svg></span>
+        <h1>WebRTC Call</h1>
+      </div>
       <span class="badge" id="connBadge">离线</span>
     </header>
 
     <section class="panel" id="joinPanel">
+      <div class="join-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="12" x="2" y="6" rx="2"/><path d="m22 8-6 4 6 4V8Z"/></svg></div>
       <div class="form-row">
         <label for="room">房间</label>
         <input id="room" placeholder="demo" autocomplete="off" spellcheck="false" />
@@ -88,10 +102,10 @@
       </div>
 
       <div class="media-controls">
-        <button id="toggleMic" class="btn-icon" title="麦克风">🎤</button>
-        <button id="toggleCam" class="btn-icon" title="摄像头">📷</button>
-        <button id="shareScreen" class="btn-icon" title="屏幕共享">🖥</button>
-        <button id="leave" class="btn-icon btn-icon--danger" title="离开">📞</button>
+        <button id="toggleMic" class="btn-icon" title="麦克风"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></button>
+        <button id="toggleCam" class="btn-icon" title="摄像头"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg></button>
+        <button id="shareScreen" class="btn-icon" title="屏幕共享"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 10 3-3 3 3"/><path d="M12 13V7"/><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M12 17v4"/><path d="M8 21h8"/></svg></button>
+        <button id="leave" class="btn-icon btn-icon--danger" title="离开"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="22" y1="2" y2="22"/><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
       </div>
 
       <div class="chat">
@@ -110,6 +124,14 @@
     const $ = s => document.querySelector(s);
     const myId = "u-" + Math.random().toString(36).slice(2, 10);
     const iceServers = [{ urls: ["stun:stun.l.google.com:19302"] }];
+
+    const ICON = {
+      mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>',
+      micOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="22" y1="2" y2="22"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><line x1="12" x2="12" y1="19" y2="22"/></svg>',
+      cam: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>',
+      camOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="22" y1="2" y2="22"/><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>',
+    };
+    const setIcon = (el, name) => el.innerHTML = ICON[name];
 
     let ws = null, roomId = null, displayName = null, localStream = null;
     let screenStream = null, usingScreen = false;
@@ -317,14 +339,14 @@
       if (!localStream) return;
       micEnabled = !micEnabled;
       localStream.getAudioTracks().forEach(t => t.enabled = micEnabled);
-      els.toggleMic.textContent = micEnabled ? "🎤" : "🔇";
+      setIcon(els.toggleMic, micEnabled ? "mic" : "micOff");
       els.toggleMic.classList.toggle("btn-icon--muted", !micEnabled);
     }
     function toggleCam() {
       if (!localStream) return;
       camEnabled = !camEnabled;
       localStream.getVideoTracks().forEach(t => t.enabled = camEnabled);
-      els.toggleCam.textContent = camEnabled ? "📷" : "🚫";
+      setIcon(els.toggleCam, camEnabled ? "cam" : "camOff");
       els.toggleCam.classList.toggle("btn-icon--muted", !camEnabled);
     }
 
@@ -370,8 +392,8 @@
       reconnectAttempts = 0;
       micEnabled = true;
       camEnabled = true;
-      els.toggleMic.textContent = "🎤";
-      els.toggleCam.textContent = "📷";
+      setIcon(els.toggleMic, "mic");
+      setIcon(els.toggleCam, "cam");
       els.toggleMic.classList.remove("btn-icon--muted");
       els.toggleCam.classList.remove("btn-icon--muted");
       els.startBtn.disabled = true;
