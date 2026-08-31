@@ -2,6 +2,12 @@
 
 浏览器端原生 WebRTC 音视频通话（1v1 / Mesh 多人）项目，配套 Go WebSocket 信令，个人练手业余作品。与后端工程化信令服务 [webrtc-signaling](https://github.com/build-workbench/webrtc-signaling) 形成「前端通话客户端 ↔ 后端信令服务」的对照。
 
+## 截图
+
+| 加入房间 | 1v1 通话 |
+|----------|----------|
+| ![加入房间](docs/screenshots/join.png) | ![1v1 通话](docs/screenshots/call.png) |
+
 ## 关于本项目
 
 这是我的业余练手项目，用来学习 WebRTC 和 Go：
