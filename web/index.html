@@ -3,34 +3,40 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WebRTC Call</title>
+  <title>WebRTC Call — 极简原生 P2P 音视频通话</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎥</text></svg>" />
   <style>
     :root {
-      --bg-base: #070a13;
-      --bg-surface: rgba(15, 23, 42, 0.75);
-      --bg-surface-elevated: #111a2e;
-      --bg-card: #0b1222;
+      --bg-base: #060911;
+      --bg-surface: rgba(13, 20, 36, 0.72);
+      --bg-surface-elevated: rgba(20, 30, 52, 0.85);
+      --bg-card: #090e1a;
       --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-medium: rgba(255, 255, 255, 0.14);
       --border-focus: rgba(99, 102, 241, 0.6);
       --primary: #4f46e5;
       --primary-hover: #4338ca;
-      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      --accent-glow: rgba(99, 102, 241, 0.25);
+      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+      --brand-gradient: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --accent-cyan: #38bdf8;
       --danger: #ef4444;
       --danger-hover: #dc2626;
+      --danger-glow: rgba(239, 68, 68, 0.35);
       --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.3);
       --warning: #f59e0b;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --text-dim: #64748b;
-      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
       --radius-xl: 20px;
       --radius-lg: 14px;
       --radius-md: 10px;
       --radius-sm: 6px;
-      --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border-subtle);
-      --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border-subtle);
+      --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--border-subtle);
+      --shadow-card: 0 12px 30px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border-subtle);
+      --shadow-dock: 0 16px 36px -6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 0 0 1px var(--border-subtle);
     }
 
     *, *::before, *::after {
@@ -41,139 +47,178 @@
 
     body {
       font-family: var(--font-sans);
-      background: var(--bg-base);
+      background-color: var(--bg-base);
       background-image: 
-        radial-gradient(circle at 50% -10%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
-        radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+        radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.15) 0%, transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 0% 100%, rgba(236, 72, 153, 0.06) 0%, transparent 50%);
+      background-attachment: fixed;
       color: var(--text-main);
       line-height: 1.5;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
     .hidden { display: none !important; }
 
-    /* ── Header ── */
+    /* ── App Header ── */
     .app-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 24px;
-      background: rgba(11, 18, 34, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      padding: 12px 28px;
+      background: rgba(6, 9, 17, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-subtle);
       position: sticky;
       top: 0;
       z-index: 50;
+      transition: all 0.3s ease;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       text-decoration: none;
+      cursor: pointer;
     }
 
-    .brand-icon {
-      width: 34px;
-      height: 34px;
+    .brand-icon-wrap {
+      width: 36px;
+      height: 36px;
       border-radius: var(--radius-md);
       background: var(--primary-gradient);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-      box-shadow: 0 0 16px var(--accent-glow);
+      font-size: 19px;
+      box-shadow: 0 0 20px var(--accent-glow);
+      position: relative;
+    }
+
+    .brand-icon-wrap::after {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      background: var(--primary-gradient);
+      opacity: 0.3;
+      filter: blur(4px);
+      z-index: -1;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
     }
 
     .brand h1 {
       font-size: 1.15rem;
       font-weight: 700;
       letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #93c5fd 0%, #c4b5fd 100%);
+      background: var(--brand-gradient);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    .brand-tagline {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     .header-center {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .info-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
+      gap: 7px;
+      padding: 6px 14px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border-subtle);
       font-size: 0.8rem;
       color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      transition: all 0.2s ease;
     }
 
     .room-pill {
       cursor: pointer;
-      transition: all 0.2s ease;
+      user-select: none;
     }
     .room-pill:hover {
       background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.15);
+      border-color: var(--border-medium);
+      color: var(--text-main);
     }
+    .room-pill:active { transform: scale(0.97); }
     .room-pill .pill-val {
       font-weight: 600;
       color: #93c5fd;
     }
 
     .timer-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--success);
-      animation: pulse-glow 1.5s infinite;
+      box-shadow: 0 0 10px var(--success-glow);
+      animation: pulse-glow 1.8s infinite ease-in-out;
     }
 
     .badge {
       font-size: 0.72rem;
       font-weight: 600;
       letter-spacing: 0.04em;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.05);
       color: var(--text-dim);
       border: 1px solid var(--border-subtle);
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      transition: all 0.2s ease;
     }
     .badge--online {
       background: rgba(16, 185, 129, 0.12);
       color: #34d399;
       border-color: rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
     }
     .badge--warn {
       background: rgba(245, 158, 11, 0.12);
       color: #fbbf24;
       border-color: rgba(245, 158, 11, 0.3);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
     }
 
-    /* ── Main Layout Container ── */
+    /* ── Main Layout ── */
     .app-main {
       flex: 1;
       display: flex;
       flex-direction: column;
-      padding: 20px;
-      max-width: 1440px;
+      padding: 24px;
+      max-width: 1480px;
       width: 100%;
       margin: 0 auto;
     }
 
-    /* ── Join Panel (Lobby) ── */
+    /* ── Lobby (Join Card) ── */
     .lobby-wrapper {
       flex: 1;
       display: flex;
@@ -184,16 +229,17 @@
 
     .join-card {
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
       background: var(--bg-surface);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xl);
-      padding: 36px 32px;
+      padding: 40px 36px;
       box-shadow: var(--shadow-lg);
       position: relative;
       overflow: hidden;
+      animation: float-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .join-card::before {
@@ -206,29 +252,56 @@
       background: var(--primary-gradient);
     }
 
+    .join-header {
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    .join-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
     .join-title {
-      font-size: 1.4rem;
+      font-size: 1.55rem;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
       color: var(--text-main);
     }
 
     .join-desc {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: var(--text-muted);
-      margin-bottom: 24px;
+      line-height: 1.45;
     }
 
     .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     .form-group label {
-      display: block;
-      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
       font-weight: 500;
       color: var(--text-muted);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    .label-hint {
+      font-size: 0.72rem;
+      color: var(--text-dim);
     }
 
     .input-wrap {
@@ -239,77 +312,114 @@
 
     .input-icon {
       position: absolute;
-      left: 12px;
+      left: 14px;
       color: var(--text-dim);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       pointer-events: none;
+      display: flex;
+      align-items: center;
     }
 
     .input-wrap input {
       width: 100%;
-      padding: 11px 12px 11px 36px;
+      padding: 12px 14px 12px 40px;
       border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
-      background: rgba(8, 12, 22, 0.7);
+      background: rgba(6, 9, 17, 0.7);
       color: var(--text-main);
-      font-size: 0.92rem;
+      font-size: 0.94rem;
       font-family: inherit;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .input-wrap input:hover {
+      border-color: var(--border-medium);
+      background: rgba(6, 9, 17, 0.85);
     }
 
     .input-wrap input:focus {
       outline: none;
       border-color: #6366f1;
-      background: rgba(8, 12, 22, 0.95);
+      background: rgba(6, 9, 17, 0.95);
       box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .btn-dice {
+      position: absolute;
+      right: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .btn-dice:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      transform: rotate(30deg);
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 12px 20px;
+      gap: 10px;
+      padding: 13px 24px;
       border-radius: var(--radius-md);
       border: none;
-      font-size: 0.92rem;
+      font-size: 0.94rem;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
       color: var(--text-main);
       background: rgba(255, 255, 255, 0.08);
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
     }
-    .btn:hover { background: rgba(255, 255, 255, 0.12); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:hover { background: rgba(255, 255, 255, 0.14); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
     .btn-primary {
       width: 100%;
-      margin-top: 8px;
+      margin-top: 10px;
       background: var(--primary-gradient);
-      box-shadow: 0 4px 16px var(--accent-glow);
+      box-shadow: 0 6px 20px var(--accent-glow);
     }
     .btn-primary:hover {
-      opacity: 0.95;
+      opacity: 0.96;
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px var(--accent-glow);
+      box-shadow: 0 8px 26px var(--accent-glow);
     }
     .btn-primary:active { transform: translateY(0); }
 
     .feature-tags {
       display: flex;
       justify-content: center;
-      gap: 12px;
-      margin-top: 24px;
-      padding-top: 20px;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      margin-top: 26px;
+      padding-top: 22px;
       border-top: 1px solid var(--border-subtle);
     }
     .feature-tag {
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       color: var(--text-dim);
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
+      font-weight: 500;
+    }
+    .feature-tag svg {
+      color: #818cf8;
     }
 
     /* ── Active Call Stage ── */
@@ -319,13 +429,14 @@
       flex-direction: column;
       gap: 16px;
       min-height: 0;
+      animation: float-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .stage-layout {
       flex: 1;
       display: flex;
       gap: 16px;
-      min-height: 480px;
+      min-height: 520px;
       position: relative;
     }
 
@@ -333,14 +444,15 @@
     .video-grid {
       flex: 1;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 18px;
       align-content: center;
       justify-content: center;
-      background: rgba(8, 12, 22, 0.4);
+      background: rgba(6, 9, 17, 0.4);
       border-radius: var(--radius-xl);
-      padding: 16px;
+      padding: 20px;
       border: 1px solid var(--border-subtle);
+      transition: all 0.3s ease;
     }
 
     .video-card {
@@ -354,15 +466,30 @@
       align-items: center;
       justify-content: center;
       border: 2px solid transparent;
-      transition: border-color 0.25s ease, transform 0.25s ease;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .video-card:hover {
-      border-color: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.15);
     }
 
     .video-card--local {
       border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    /* Active voice glow */
+    .video-card.speaking {
+      border-color: var(--accent-cyan) !important;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.5), 0 0 28px rgba(56, 189, 248, 0.4) !important;
+    }
+
+    /* Spotlight / Maximized mode */
+    .video-card.spotlight {
+      grid-column: 1 / -1;
+      aspect-ratio: 21/9;
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.5), 0 0 32px rgba(139, 92, 246, 0.3);
     }
 
     .video-card video {
@@ -370,13 +497,14 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      background: #000;
     }
 
     .video-card--local video:not(.screenshare) {
       transform: scaleX(-1);
     }
 
-    /* Video Overlay & Badges */
+    /* Video Overlay & Controls */
     .video-overlay {
       position: absolute;
       inset: 0;
@@ -384,8 +512,14 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 10px 12px;
-      background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, transparent 20%, transparent 80%, rgba(0, 0, 0, 0.6) 100%);
+      padding: 12px 14px;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.65) 100%);
+      opacity: 0.9;
+      transition: opacity 0.25s ease;
+    }
+
+    .video-card:hover .video-overlay {
+      opacity: 1;
     }
 
     .video-overlay > * { pointer-events: auto; }
@@ -393,136 +527,196 @@
     .video-top-bar {
       display: flex;
       justify-content: flex-end;
+      gap: 6px;
     }
 
     .card-action-btn {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       border-radius: var(--radius-sm);
-      background: rgba(0, 0, 0, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #cbd5e1;
+      background: rgba(6, 9, 17, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      backdrop-filter: blur(4px);
-      transition: all 0.2s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .card-action-btn:hover {
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(255, 255, 255, 0.3);
       color: #fff;
+      transform: scale(1.05);
     }
 
     .video-bottom-bar {
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
     }
 
     .user-pill {
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       font-weight: 500;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(6px);
+      background: rgba(6, 9, 17, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: var(--text-main);
-      padding: 4px 10px;
-      border-radius: var(--radius-sm);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
     }
 
     .user-pill .tag-self {
-      font-size: 0.65rem;
+      font-size: 0.68rem;
       background: var(--primary);
       color: #fff;
-      padding: 1px 5px;
+      padding: 1px 6px;
       border-radius: 4px;
       font-weight: 600;
     }
 
-    /* Avatar placeholder when camera is off */
+    .sound-bars {
+      display: none;
+      align-items: center;
+      gap: 2px;
+      height: 12px;
+    }
+    .video-card.speaking .sound-bars {
+      display: inline-flex;
+    }
+    .sound-bar {
+      width: 2px;
+      background: var(--accent-cyan);
+      border-radius: 1px;
+      animation: sound-bounce 0.8s infinite ease-in-out alternate;
+    }
+    .sound-bar:nth-child(2) { animation-delay: 0.2s; }
+    .sound-bar:nth-child(3) { animation-delay: 0.4s; }
+
+    /* Avatar Fallback Placeholder */
     .avatar-fallback {
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      background: radial-gradient(circle at center, #151d30 0%, #080c16 100%);
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 14px;
       z-index: 2;
     }
     .avatar-fallback.active { display: flex; }
 
     .avatar-circle {
-      width: 68px;
-      height: 68px;
+      width: 74px;
+      height: 74px;
       border-radius: 50%;
       background: var(--primary-gradient);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.6rem;
+      font-size: 1.75rem;
       font-weight: 700;
       color: #fff;
-      box-shadow: 0 8px 24px var(--accent-glow);
-    }
-    .avatar-name {
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: var(--text-muted);
+      box-shadow: 0 10px 30px var(--accent-glow);
+      position: relative;
     }
 
-    /* ── Collapsible Chat Sidebar ── */
+    .avatar-circle::before {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px dashed rgba(255, 255, 255, 0.25);
+      animation: rotate-slow 20s linear infinite;
+    }
+
+    .avatar-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Chat Drawer ── */
     .chat-drawer {
-      width: 340px;
+      width: 360px;
       background: var(--bg-surface);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-xl);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-lg);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .chat-header {
-      padding: 14px 18px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: rgba(255, 255, 255, 0.02);
     }
 
     .chat-title {
-      font-size: 0.92rem;
+      font-size: 0.96rem;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
       color: var(--text-main);
     }
 
     .chat-log {
       flex: 1;
-      padding: 16px;
+      padding: 18px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      font-size: 0.84rem;
-      min-height: 200px;
+      gap: 12px;
+      font-size: 0.86rem;
+      min-height: 220px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-empty-state {
+      margin: auto;
+      text-align: center;
+      color: var(--text-dim);
+      padding: 24px;
+    }
+    .chat-empty-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.6;
+    }
+    .chat-empty-state p {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .chat-empty-state span {
+      font-size: 0.72rem;
+      color: var(--text-dim);
     }
 
     .chat-msg {
       display: flex;
       flex-direction: column;
-      max-width: 85%;
+      max-width: 86%;
       word-break: break-word;
+      animation: fade-in 0.2s ease-out;
     }
 
     .chat-msg--self {
@@ -536,68 +730,74 @@
     }
 
     .chat-msg-meta {
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       color: var(--text-dim);
-      margin-bottom: 3px;
-      padding: 0 4px;
+      margin-bottom: 4px;
+      padding: 0 6px;
+      font-weight: 500;
     }
 
     .chat-msg-bubble {
-      padding: 8px 13px;
+      padding: 9px 15px;
       border-radius: var(--radius-md);
-      line-height: 1.45;
+      line-height: 1.5;
+      font-size: 0.88rem;
     }
 
     .chat-msg--self .chat-msg-bubble {
       background: var(--primary-gradient);
       color: #fff;
-      border-bottom-right-radius: 2px;
+      border-bottom-right-radius: 3px;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
     }
 
     .chat-msg--peer .chat-msg-bubble {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.07);
       color: var(--text-main);
       border: 1px solid var(--border-subtle);
-      border-bottom-left-radius: 2px;
+      border-bottom-left-radius: 3px;
     }
 
     .chat-msg--sys {
       align-self: center;
       text-align: center;
-      font-size: 0.72rem;
+      font-size: 0.73rem;
       color: var(--text-dim);
       background: rgba(255, 255, 255, 0.04);
-      padding: 3px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 4px 12px;
       border-radius: 999px;
       margin: 4px 0;
     }
 
     .chat-input-wrap {
       display: flex;
-      padding: 12px;
-      gap: 8px;
+      padding: 14px;
+      gap: 10px;
       border-top: 1px solid var(--border-subtle);
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(6, 9, 17, 0.4);
     }
 
     .chat-input-wrap input {
       flex: 1;
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
-      background: rgba(8, 12, 22, 0.7);
+      background: rgba(6, 9, 17, 0.7);
       color: var(--text-main);
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       font-family: inherit;
+      transition: all 0.2s ease;
     }
     .chat-input-wrap input:focus {
       outline: none;
       border-color: #6366f1;
+      box-shadow: 0 0 0 2px var(--accent-glow);
     }
 
     .chat-send-btn {
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       border-radius: var(--radius-md);
       border: none;
       background: var(--primary-gradient);
@@ -606,33 +806,37 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 10px var(--accent-glow);
     }
-    .chat-send-btn:hover { opacity: 0.9; }
+    .chat-send-btn:hover {
+      opacity: 0.95;
+      transform: scale(1.05);
+    }
+    .chat-send-btn:active { transform: scale(0.95); }
 
-    /* ── Floating Control Dock ── */
+    /* ── Floating Media Control Dock ── */
     .dock-wrapper {
       display: flex;
       justify-content: center;
-      padding: 8px 0;
+      padding: 10px 0 6px;
     }
 
     .media-dock {
       display: inline-flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 18px;
+      gap: 14px;
+      padding: 11px 22px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--border-subtle);
-      box-shadow: var(--shadow-lg);
+      background: rgba(13, 20, 36, 0.85);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: var(--shadow-dock);
     }
 
     .btn-dock {
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       border: none;
       background: rgba(255, 255, 255, 0.08);
@@ -642,66 +846,99 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .btn-dock:hover {
       background: rgba(255, 255, 255, 0.16);
-      transform: translateY(-2px);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
     }
 
     .btn-dock:active { transform: translateY(0); }
 
+    /* Tooltip */
+    .btn-dock[data-tooltip]::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 12px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid var(--border-medium);
+      color: #f8fafc;
+      font-size: 0.74rem;
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      z-index: 100;
+    }
+
+    .btn-dock[data-tooltip]:hover::before {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
     .btn-dock--active {
       background: rgba(59, 130, 246, 0.25);
       color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.4);
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      box-shadow: 0 0 16px rgba(59, 130, 246, 0.3);
     }
 
     .btn-dock--muted {
-      background: rgba(239, 68, 68, 0.2);
+      background: rgba(239, 68, 68, 0.22);
       color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.4);
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.25);
     }
 
     .btn-dock--danger {
       background: var(--danger);
       color: #fff;
+      box-shadow: 0 4px 16px var(--danger-glow);
     }
     .btn-dock--danger:hover {
       background: var(--danger-hover);
-      box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+      box-shadow: 0 6px 22px var(--danger-glow);
     }
 
     .dock-badge {
       position: absolute;
       top: -2px;
       right: -2px;
-      width: 18px;
-      height: 18px;
+      width: 19px;
+      height: 19px;
       border-radius: 50%;
-      background: var(--primary);
+      background: #ec4899;
       color: #fff;
-      font-size: 0.65rem;
+      font-size: 0.68rem;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       border: 2px solid var(--bg-base);
+      animation: pulse-glow 1.5s infinite;
     }
 
     /* ── Bottom Status Bar ── */
     .status-bar {
-      margin-top: 10px;
-      padding: 6px 14px;
+      margin-top: 14px;
+      padding: 8px 18px;
       border-radius: var(--radius-sm);
-      font-size: 0.75rem;
-      background: rgba(15, 23, 42, 0.5);
+      font-size: 0.78rem;
+      background: rgba(13, 20, 36, 0.5);
       border: 1px solid var(--border-subtle);
       color: var(--text-dim);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      font-weight: 500;
     }
 
     .status-info { color: #60a5fa; }
@@ -712,8 +949,8 @@
     /* ── Toast Notifications ── */
     .toast-container {
       position: fixed;
-      top: 70px;
-      right: 20px;
+      top: 76px;
+      right: 24px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -722,54 +959,81 @@
     }
 
     .toast {
-      padding: 10px 16px;
+      padding: 12px 18px;
       border-radius: var(--radius-md);
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid var(--border-subtle);
+      background: rgba(13, 20, 36, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-medium);
       box-shadow: var(--shadow-lg);
       color: var(--text-main);
-      font-size: 0.85rem;
+      font-size: 0.88rem;
+      font-weight: 500;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       pointer-events: auto;
-      animation: toast-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      transition: all 0.3s ease;
+      animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .toast--leaving {
       opacity: 0;
-      transform: translateX(30px);
+      transform: translateX(40px) scale(0.95);
     }
 
+    /* ── Keyframe Animations ── */
     @keyframes toast-in {
-      from { opacity: 0; transform: translateY(-10px); }
+      from { opacity: 0; transform: translateY(-12px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes float-up {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes pulse-glow {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
+      50% { opacity: 0.45; transform: scale(0.85); }
+    }
+
+    @keyframes rotate-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes sound-bounce {
+      0% { height: 4px; }
+      100% { height: 14px; }
     }
 
     /* ── Responsive ── */
     @media (max-width: 768px) {
-      .app-header { padding: 12px 16px; }
-      .app-main { padding: 12px; }
-      .stage-layout { flex-direction: column; }
+      .app-header { padding: 10px 16px; }
+      .app-main { padding: 14px; }
+      .brand h1 { font-size: 1.05rem; }
+      .brand-tagline { display: none; }
+      .stage-layout { flex-direction: column; min-height: 400px; }
       .chat-drawer {
         position: fixed;
-        bottom: 80px;
-        right: 12px;
-        left: 12px;
+        bottom: 84px;
+        right: 14px;
+        left: 14px;
         width: auto;
         height: 380px;
         z-index: 60;
       }
       .video-grid {
         grid-template-columns: 1fr;
-        padding: 10px;
+        padding: 12px;
+        gap: 12px;
       }
-      .btn-dock { width: 42px; height: 42px; }
+      .btn-dock { width: 44px; height: 44px; }
     }
   </style>
 </head>
@@ -777,17 +1041,21 @@
 
   <!-- App Header -->
   <header class="app-header">
-    <a href="#" class="brand">
-      <div class="brand-icon">🎥</div>
-      <h1>WebRTC Call</h1>
-    </a>
+    <div class="brand" onclick="location.reload()">
+      <div class="brand-icon-wrap">🎥</div>
+      <div class="brand-text">
+        <h1>WebRTC Call</h1>
+        <span class="brand-tagline">Pure Native P2P Audio & Video</span>
+      </div>
+    </div>
 
     <!-- Center Call Info (when in room) -->
     <div class="header-center hidden" id="headerCallInfo">
       <div class="info-pill room-pill" id="roomPill" title="点击复制邀请链接">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
         <span>房间:</span>
         <span class="pill-val" id="roomPillVal">demo</span>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span id="copyTip" style="display:none; color:#34d399; font-weight:600">✓ 已复制</span>
       </div>
       <div class="info-pill">
         <span class="timer-dot"></span>
@@ -811,35 +1079,60 @@
     <!-- 1. Lobby (Join Panel) -->
     <div class="lobby-wrapper" id="joinPanel">
       <div class="join-card">
-        <h2 class="join-title">开启实时通话</h2>
-        <p class="join-desc">基于浏览器原生 WebRTC，点对点加密音视频传输</p>
+        <div class="join-header">
+          <div class="join-badge-pill">
+            <span class="timer-dot" style="background:#818cf8; box-shadow:0 0 8px rgba(129,140,248,0.5)"></span>
+            P2P Mesh 通信体验
+          </div>
+          <h2 class="join-title">开启音视频通话</h2>
+          <p class="join-desc">基于浏览器原生 WebRTC API，点对点建立双向高保真音视频与数据流。</p>
+        </div>
 
         <div class="form-group">
-          <label for="room">房间名称</label>
+          <label for="room">
+            <span>房间名称</span>
+            <span class="label-hint">同名房间自动互通</span>
+          </label>
           <div class="input-wrap">
             <span class="input-icon">#</span>
-            <input id="room" placeholder="demo" autocomplete="off" spellcheck="false" />
+            <input id="room" placeholder="例如: meeting-room" autocomplete="off" spellcheck="false" />
+            <button class="btn-dice" id="btnRandomRoom" type="button" title="随机生成房间名">🎲</button>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="name">您的昵称</label>
+          <label for="name">
+            <span>您的昵称</span>
+            <span class="label-hint">用于通话标识</span>
+          </label>
           <div class="input-wrap">
             <span class="input-icon">@</span>
-            <input id="name" placeholder="Alice" autocomplete="off" spellcheck="false" />
+            <input id="name" placeholder="例如: Alice" autocomplete="off" spellcheck="false" />
           </div>
         </div>
 
         <button id="start" class="btn btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-5m0 0l-5-5m5 5H4"/></svg>
-          <span>加入房间</span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 10l5-5m0 0l-5-5m5 5H4"/></svg>
+          <span>进入房间</span>
         </button>
 
         <div class="feature-tags">
-          <span class="feature-tag">⚡ 原生 P2P</span>
-          <span class="feature-tag">🔒 端到端通道</span>
-          <span class="feature-tag">🖥 屏幕共享</span>
-          <span class="feature-tag">💬 实时文字</span>
+          <span class="feature-tag">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            原生 P2P
+          </span>
+          <span class="feature-tag">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            端到端加密
+          </span>
+          <span class="feature-tag">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            屏幕共享
+          </span>
+          <span class="feature-tag">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+            DataChannel 聊天
+          </span>
         </div>
       </div>
     </div>
@@ -859,6 +1152,12 @@
             <video id="local" autoplay playsinline muted></video>
             <div class="video-overlay">
               <div class="video-top-bar">
+                <button class="card-action-btn" title="画中画 (PiP)" onclick="toggleCardPiP('localCard')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><rect width="8" height="6" x="12" y="9" rx="1"/></svg>
+                </button>
+                <button class="card-action-btn" title="聚光灯聚焦" onclick="toggleCardSpotlight('localCard')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/></svg>
+                </button>
                 <button class="card-action-btn" title="全屏" onclick="toggleCardFullscreen('localCard')">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                 </button>
@@ -867,25 +1166,38 @@
                 <div class="user-pill">
                   <span id="localLabel">我</span>
                   <span class="tag-self">您</span>
+                  <div class="sound-bars">
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                    <span class="sound-bar"></span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Chat Sidebar / Drawer -->
+        <!-- Collapsible Chat Sidebar / Drawer -->
         <aside class="chat-drawer hidden" id="chatDrawer">
           <div class="chat-header">
             <div class="chat-title">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-              <span>房间聊天 (P2P)</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              <span>房间聊天 (P2P DataChannel)</span>
             </div>
             <button class="card-action-btn" id="closeChatBtn" title="关闭聊天">✕</button>
           </div>
-          <div class="chat-log" id="chatLog"></div>
+          
+          <div class="chat-log" id="chatLog">
+            <div class="chat-empty-state" id="chatEmpty">
+              <div class="chat-empty-icon">💬</div>
+              <p>暂无消息</p>
+              <span>通过 WebRTC DataChannel 点对点直传</span>
+            </div>
+          </div>
+
           <form class="chat-input-wrap" id="chatForm">
-            <input id="chatText" placeholder="发送消息 (Enter)..." autocomplete="off" />
-            <button type="submit" class="chat-send-btn" title="发送">
+            <input id="chatText" placeholder="输入消息 (Enter 发送)..." autocomplete="off" />
+            <button type="submit" class="chat-send-btn" title="发送消息">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
             </button>
           </form>
@@ -895,21 +1207,21 @@
       <!-- Floating Media Dock -->
       <div class="dock-wrapper">
         <div class="media-dock">
-          <button id="toggleMic" class="btn-dock" title="麦克风">
-            <svg id="iconMic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          <button id="toggleMic" class="btn-dock" data-tooltip="切换麦克风 (M)">
+            <svg id="iconMic" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
           </button>
-          <button id="toggleCam" class="btn-dock" title="摄像头">
-            <svg id="iconCam" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+          <button id="toggleCam" class="btn-dock" data-tooltip="切换摄像头 (V)">
+            <svg id="iconCam" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
           </button>
-          <button id="shareScreen" class="btn-dock" title="屏幕共享">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <button id="shareScreen" class="btn-dock" data-tooltip="屏幕共享 (S)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           </button>
-          <button id="toggleChat" class="btn-dock" title="聊天">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+          <button id="toggleChat" class="btn-dock" data-tooltip="文字聊天 (C)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
             <span class="dock-badge hidden" id="unreadBadge">0</span>
           </button>
-          <button id="leave" class="btn-dock btn-dock--danger" title="离开通话">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6 19.8 19.8 0 0 1-3.12-8.68A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="22" y1="2" x2="2" y2="22"/></svg>
+          <button id="leave" class="btn-dock btn-dock--danger" data-tooltip="离开房间">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6 19.8 19.8 0 0 1-3.12-8.68A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="22" y1="2" x2="2" y2="22"/></svg>
           </button>
         </div>
       </div>
@@ -934,6 +1246,7 @@
     let micEnabled = true, camEnabled = true;
     let callTimerInterval = null, callStartTime = null;
     let chatOpen = false, unreadCount = 0;
+    let audioMeterStop = null;
     const MAX_RECONNECT = 5;
     const pcs = new Map();
     const dataChannels = new Map();
@@ -942,27 +1255,123 @@
     const els = {
       joinPanel: $("#joinPanel"), callPanel: $("#callPanel"), connBadge: $("#connBadge"),
       status: $("#status"), chatLog: $("#chatLog"), chatForm: $("#chatForm"), chatText: $("#chatText"),
-      videoGrid: $("#videoGrid"), localVideo: $("#local"), localLabel: $("#localLabel"),
-      localAvatar: $("#localAvatar"), localAvatarCircle: $("#localAvatarCircle"), localAvatarName: $("#localAvatarName"),
-      startBtn: $("#start"), leaveBtn: $("#leave"),
+      chatEmpty: $("#chatEmpty"), videoGrid: $("#videoGrid"), localVideo: $("#local"), localLabel: $("#localLabel"),
+      localCard: $("#localCard"), localAvatar: $("#localAvatar"), localAvatarCircle: $("#localAvatarCircle"),
+      localAvatarName: $("#localAvatarName"), startBtn: $("#start"), leaveBtn: $("#leave"),
       toggleMic: $("#toggleMic"), toggleCam: $("#toggleCam"), shareScreen: $("#shareScreen"),
       toggleChat: $("#toggleChat"), chatDrawer: $("#chatDrawer"), closeChatBtn: $("#closeChatBtn"),
       unreadBadge: $("#unreadBadge"), headerCallInfo: $("#headerCallInfo"), roomPill: $("#roomPill"),
-      roomPillVal: $("#roomPillVal"), callTimer: $("#callTimer"), memberCount: $("#memberCount")
+      roomPillVal: $("#roomPillVal"), copyTip: $("#copyTip"), callTimer: $("#callTimer"),
+      memberCount: $("#memberCount"), btnRandomRoom: $("#btnRandomRoom"), roomInput: $("#room"),
+      nameInput: $("#name")
     };
 
-    // Auto-fill room from URL query string if present
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has("room")) {
-      $("#room").value = urlParams.get("room");
+    // Color gradients palette for participant avatars
+    const AVATAR_GRADIENTS = [
+      "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+      "linear-gradient(135deg, #ec4899, #8b5cf6)",
+      "linear-gradient(135deg, #10b981, #06b6d4)",
+      "linear-gradient(135deg, #f59e0b, #ef4444)",
+      "linear-gradient(135deg, #8b5cf6, #3b82f6)",
+      "linear-gradient(135deg, #14b8a6, #3b82f6)"
+    ];
+    function getAvatarGradient(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
     }
 
-    // SVG templates for toggles
+    // Auto-fill room from URL query if present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("room")) {
+      els.roomInput.value = urlParams.get("room");
+    }
+
+    // Random room name generator
+    els.btnRandomRoom.addEventListener("click", () => {
+      const words = ["alpha", "beta", "gamma", "lounge", "dev", "matrix", "nexus", "studio", "cafe"];
+      const randWord = words[Math.floor(Math.random() * words.length)];
+      const randNum = Math.floor(100 + Math.random() * 900);
+      els.roomInput.value = `${randWord}-${randNum}`;
+      els.roomInput.focus();
+    });
+
+    // Subtle synthesizer audio chime (zero audio files needed)
+    function playChime(type) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const now = ctx.currentTime;
+        if (type === "join") {
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+          gain.gain.setValueAtTime(0.04, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === "msg") {
+          osc.frequency.setValueAtTime(587, now);
+          gain.gain.setValueAtTime(0.03, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else if (type === "leave") {
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.exponentialRampToValueAtTime(320, now + 0.2);
+          gain.gain.setValueAtTime(0.03, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        }
+      } catch {}
+    }
+
+    // Audio meter for voice activity detection
+    function attachAudioMeter(stream, targetCard) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx || !stream.getAudioTracks().length) return () => {};
+        const ctx = new AudioCtx();
+        const src = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 64;
+        src.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        let raf;
+        function check() {
+          analyser.getByteFrequencyData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) sum += data[i];
+          const avg = sum / data.length;
+          if (avg > 14) {
+            targetCard.classList.add("speaking");
+          } else {
+            targetCard.classList.remove("speaking");
+          }
+          raf = requestAnimationFrame(check);
+        }
+        check();
+        return () => {
+          cancelAnimationFrame(raf);
+          targetCard.classList.remove("speaking");
+          ctx.close();
+        };
+      } catch {
+        return () => {};
+      }
+    }
+
+    // SVG icon templates
     const ICONS = {
-      micOn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
-      micOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="2" x2="22" y2="22"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
-      camOn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>',
-      camOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="2" x2="22" y2="22"/><path d="m22 8-6 4 6 4V8Z"/><path d="M14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2"/><path d="M10 6h4a2 2 0 0 1 2 2v4"/></svg>'
+      micOn: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+      micOff: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="2" x2="22" y2="22"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+      camOn: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>',
+      camOff: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="2" x2="22" y2="22"/><path d="m22 8-6 4 6 4V8Z"/><path d="M14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2"/><path d="M10 6h4a2 2 0 0 1 2 2v4"/></svg>'
     };
 
     function send(obj) {
@@ -1024,6 +1433,7 @@
     }
 
     function logChat(html) {
+      if (els.chatEmpty) els.chatEmpty.classList.add("hidden");
       const div = document.createElement("div");
       div.innerHTML = html;
       els.chatLog.appendChild(div);
@@ -1046,12 +1456,13 @@
         </div>
       `;
       logChat(html);
+      playChime("msg");
 
       if (!chatOpen && !isSelf) {
         unreadCount++;
         els.unreadBadge.textContent = unreadCount;
         els.unreadBadge.classList.remove("hidden");
-        showToast(`新消息来自 ${name}: ${safeText.slice(0, 20)}`);
+        showToast(`💬 ${name}: ${safeText.slice(0, 24)}`);
       }
     }
 
@@ -1065,6 +1476,27 @@
       }
     };
 
+    window.toggleCardPiP = async function(cardId) {
+      const card = document.getElementById(cardId);
+      const video = card ? card.querySelector("video") : null;
+      if (!video) return;
+      try {
+        if (document.pictureInPictureElement) {
+          await document.exitPictureInPicture();
+        } else {
+          await video.requestPictureInPicture();
+        }
+      } catch (e) {
+        showToast("浏览器不支持画中画或已被禁用", "warn");
+      }
+    };
+
+    window.toggleCardSpotlight = function(cardId) {
+      const card = document.getElementById(cardId);
+      if (!card) return;
+      card.classList.toggle("spotlight");
+    };
+
     function ensureVideoCard(peerId) {
       const cid = "vc-" + peerId;
       let card = document.getElementById(cid);
@@ -1075,14 +1507,22 @@
       card.className = "video-card";
 
       const initial = shortId(peerId).slice(0, 2).toUpperCase();
+      const gradient = getAvatarGradient(peerId);
+
       card.innerHTML = `
         <div class="avatar-fallback" id="avatar-${peerId}">
-          <div class="avatar-circle">${initial}</div>
+          <div class="avatar-circle" style="background:${gradient}">${initial}</div>
           <span class="avatar-name">${shortId(peerId)}</span>
         </div>
         <video autoplay playsinline></video>
         <div class="video-overlay">
           <div class="video-top-bar">
+            <button class="card-action-btn" title="画中画 (PiP)" onclick="toggleCardPiP('${cid}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><rect width="8" height="6" x="12" y="9" rx="1"/></svg>
+            </button>
+            <button class="card-action-btn" title="聚光灯聚焦" onclick="toggleCardSpotlight('${cid}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/></svg>
+            </button>
             <button class="card-action-btn" title="全屏" onclick="toggleCardFullscreen('${cid}')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
             </button>
@@ -1090,6 +1530,11 @@
           <div class="video-bottom-bar">
             <div class="user-pill">
               <span>${shortId(peerId)}</span>
+              <div class="sound-bars">
+                <span class="sound-bar"></span>
+                <span class="sound-bar"></span>
+                <span class="sound-bar"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -1114,6 +1559,10 @@
       pc.ontrack = ev => {
         const v = ensureVideoCard(peerId);
         v.srcObject = ev.streams[0];
+        const card = document.getElementById("vc-" + peerId);
+        if (card && ev.streams[0]) {
+          attachAudioMeter(ev.streams[0], card);
+        }
       };
 
       pc.onicecandidate = ev => {
@@ -1124,7 +1573,8 @@
 
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "connected") {
-          showToast(`已建立与 ${shortId(peerId)} 的 P2P 连接`, "success");
+          showToast(`已建立与 ${shortId(peerId)} 的 P2P 直连`, "success");
+          playChime("join");
         } else if (pc.connectionState === "failed") {
           logSystem("与 " + shortId(peerId) + " 连接失败");
         } else if (pc.connectionState === "disconnected") {
@@ -1176,6 +1626,7 @@
         if (!current.has(pid)) {
           closePeer(pid);
           knownPeers.delete(pid);
+          playChime("leave");
         }
       }
       updateMemberCount();
@@ -1187,7 +1638,7 @@
 
       ws.onopen = () => {
         reconnectAttempts = 0;
-        setStatus("已连接信令服务器，正在加入房间...", "info");
+        setStatus("已连接信令服务，正在进入房间...", "info");
         send({ type: "join", room: roomId, from: myId });
       };
 
@@ -1196,8 +1647,8 @@
         switch (m.type) {
           case "joined":
             setBadge("online");
-            setStatus("已加入房间: " + roomId, "ok");
-            showToast(`成功进入房间 #${roomId}`);
+            setStatus("已进入房间: #" + roomId, "ok");
+            showToast(`成功加入房间 #${roomId}`);
             break;
           case "room_members":
             handleMembers(m.members || []);
@@ -1223,37 +1674,38 @@
           case "hangup":
             closePeer(m.from);
             knownPeers.delete(m.from);
-            logSystem(shortId(m.from) + " 挂断离开");
+            logSystem(shortId(m.from) + " 离开通话");
+            playChime("leave");
             break;
           case "error":
             logSystem("错误 [" + m.code + "]: " + m.error);
             setStatus("错误: " + m.error, "error");
-            showToast("错误: " + m.error, "error");
+            showToast("信令错误: " + m.error, "error");
             break;
         }
       };
 
-      ws.onerror = () => setStatus("WebSocket 连接出错", "error");
+      ws.onerror = () => setStatus("信令网络连接异常", "error");
       ws.onclose = () => {
         setBadge("offline");
         if (!intentionalLeave) {
           cleanupAllPeers();
           scheduleReconnect();
         } else {
-          setStatus("已断开连接", "info");
+          setStatus("已安全离开房间", "info");
         }
       };
     }
 
     async function scheduleReconnect() {
       if (intentionalLeave || reconnectAttempts >= MAX_RECONNECT) {
-        if (reconnectAttempts >= MAX_RECONNECT) setStatus("重连失败，已达最大次数限制", "error");
+        if (reconnectAttempts >= MAX_RECONNECT) setStatus("重连次数已用尽，请重新加入", "error");
         return;
       }
       reconnectAttempts++;
       const delay = Math.min(1000 * 2 ** (reconnectAttempts - 1), 16000);
       setBadge("warn");
-      setStatus(`断线重连中... (${reconnectAttempts}/${MAX_RECONNECT}) ${delay / 1000}s 后重试`, "warn");
+      setStatus(`网络中断，重连中... (${reconnectAttempts}/${MAX_RECONNECT}) ${delay / 1000}s 后重试`, "warn");
       await new Promise(r => setTimeout(r, delay));
       if (intentionalLeave) return;
       try { connectWS(); }
@@ -1276,7 +1728,7 @@
       els.toggleCam.innerHTML = camEnabled ? ICONS.camOn : ICONS.camOff;
       els.toggleCam.classList.toggle("btn-dock--muted", !camEnabled);
       els.localAvatar.classList.toggle("active", !camEnabled);
-      showToast(camEnabled ? "摄像头已开启" : "摄像头已关闭");
+      showToast(camEnabled ? "摄像头画面已恢复" : "摄像头画面已关闭");
     }
 
     async function toggleScreenShare() {
@@ -1293,7 +1745,7 @@
           const sender = pc.getSenders().find(s => s.track && s.track.kind === "video");
           if (sender) await sender.replaceTrack(track);
         }
-        showToast("已开启屏幕共享");
+        showToast("屏幕共享已开启");
         logSystem("您开启了屏幕共享");
       } catch (e) {
         showToast("屏幕共享启动取消/失败", "warn");
@@ -1334,15 +1786,17 @@
     function copyInviteLink() {
       const url = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
       navigator.clipboard.writeText(url).then(() => {
-        showToast("邀请链接已复制到剪贴板！");
+        els.copyTip.style.display = "inline";
+        showToast("房间邀请链接已复制到剪贴板！");
+        setTimeout(() => { els.copyTip.style.display = "none"; }, 2500);
       }).catch(() => {
         showToast(`房间链接: ${url}`);
       });
     }
 
     async function start() {
-      roomId = $("#room").value.trim() || "demo";
-      displayName = $("#name").value.trim() || "Guest";
+      roomId = els.roomInput.value.trim() || "demo";
+      displayName = els.nameInput.value.trim() || "Guest";
       intentionalLeave = false;
       reconnectAttempts = 0;
       micEnabled = true;
@@ -1359,15 +1813,18 @@
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         els.localVideo.srcObject = localStream;
+        if (audioMeterStop) audioMeterStop();
+        audioMeterStop = attachAudioMeter(localStream, els.localCard);
       } catch {
-        showToast("未检测到音视频设备或已被禁用，以信令模式加入", "warn");
-        logSystem("音视频设备不可用，已进入文本通信模式");
+        showToast("未检测到摄像头/麦克风，以纯信令模式加入", "warn");
+        logSystem("音视频设备未就绪，已切换为纯文本模式");
         els.localAvatar.classList.add("active");
       }
 
       els.localLabel.textContent = displayName;
       els.localAvatarName.textContent = displayName;
       els.localAvatarCircle.textContent = displayName.slice(0, 2).toUpperCase();
+      els.localAvatarCircle.style.background = getAvatarGradient(displayName);
 
       els.roomPillVal.textContent = roomId;
       els.headerCallInfo.classList.remove("hidden");
@@ -1389,12 +1846,14 @@
       }
       if (usingScreen) stopScreenShare();
       cleanupAllPeers();
+      if (audioMeterStop) { audioMeterStop(); audioMeterStop = null; }
       if (localStream) {
         localStream.getTracks().forEach(t => t.stop());
         localStream = null;
       }
       els.localVideo.srcObject = null;
       els.chatLog.innerHTML = "";
+      if (els.chatEmpty) els.chatEmpty.classList.remove("hidden");
       stopTimer();
       setBadge("offline");
 
@@ -1420,7 +1879,7 @@
         logMessage("我", text);
       } else {
         logMessage("我", text);
-        logSystem("提示: 当前尚无其他对端建立 DataChannel，仅本地显示");
+        logSystem("提示: 当前尚无其他对端连接建立，消息仅本地回显");
       }
       els.chatText.value = "";
     }
@@ -1428,7 +1887,7 @@
     // Event listeners
     els.startBtn.addEventListener("click", () => {
       start().catch(e => {
-        setStatus("启动失败: " + e.message, "error");
+        setStatus("加入房间失败: " + e.message, "error");
         els.startBtn.disabled = false;
       });
     });
@@ -1444,10 +1903,9 @@
       sendChat();
     });
 
-    // Keyboard shortcuts in call
+    // Keyboard shortcuts during call
     window.addEventListener("keydown", e => {
       if (els.callPanel.classList.contains("hidden")) return;
-      // Don't trigger if user is typing in chat input or any input
       if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) return;
       
       const k = e.key.toLowerCase();
