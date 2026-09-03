@@ -6,105 +6,922 @@
   <title>WebRTC Call</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎥</text></svg>" />
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0b1020;color:#e6edf3;line-height:1.5;min-height:100vh}
-    .hidden{display:none!important}
-    .container{max-width:960px;margin:0 auto;padding:20px 16px}
-    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-    .header h1{font-size:1.35rem;font-weight:700;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .badge{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:3px 10px;border-radius:999px;background:#1e293b;color:#94a3b8}
-    .badge--online{background:#064e3b;color:#34d399}
-    .badge--warn{background:#422006;color:#fbbf24}
-    .panel{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:24px;max-width:400px;margin:0 auto}
-    .form-row{margin-bottom:14px}
-    .form-row label{display:block;font-size:.8rem;font-weight:500;color:#94a3b8;margin-bottom:4px}
-    .form-row input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #2d3848;background:#0f1730;color:#e6edf3;font-size:.9rem}
-    .form-row input:focus{outline:none;border-color:#3b82f6}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:8px;border:none;font-size:.9rem;font-weight:500;cursor:pointer;color:#e6edf3;background:#1e293b}
-    .btn:hover{background:#334155}
-    .btn:disabled{opacity:.45;cursor:not-allowed}
-    .btn-primary{width:100%;margin-top:4px;background:linear-gradient(135deg,#2563eb,#7c3aed)}
-    .btn-primary:hover{background:linear-gradient(135deg,#1d4ed8,#6d28d9)}
-    .btn-sm{padding:8px 14px;font-size:.8rem}
-    .media-controls{display:flex;justify-content:center;gap:12px;padding:14px 0;flex-wrap:wrap}
-    .btn-icon{width:48px;height:48px;border-radius:50%;border:none;background:#1e293b;color:#e6edf3;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:20px}
-    .btn-icon:hover{background:#334155}
-    .btn-icon--danger{background:#991b1b}
-    .btn-icon--danger:hover{background:#b91c1c}
-    .btn-icon--muted{background:#92400e;color:#fbbf24}
-    .btn-icon--active{background:#1e3a5f;color:#60a5fa}
-    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-    .video-card{position:relative;border-radius:10px;overflow:hidden;background:#000;border:1px solid #1e293b;aspect-ratio:16/9}
-    .video-card video{width:100%;height:100%;object-fit:cover;display:block}
-    .video-card--local{border-color:#3b82f6}
-    .video-label{position:absolute;bottom:6px;left:8px;font-size:.72rem;font-weight:500;background:rgba(0,0,0,.6);color:#e6edf3;padding:2px 8px;border-radius:4px}
-    .chat{margin-top:12px;background:#111827;border:1px solid #1e293b;border-radius:10px;overflow:hidden}
-    .chat-log{padding:10px 14px;min-height:100px;max-height:200px;overflow-y:auto;font-size:.8rem;line-height:1.6;color:#cbd5e1}
-    .chat-log .msg-time{color:#475569;margin-right:6px}
-    .chat-log .msg-name{font-weight:600;color:#60a5fa}
-    .chat-log .msg-sys{color:#94a3b8;font-style:italic}
-    .chat-input{display:flex;border-top:1px solid #1e293b}
-    .chat-input input{flex:1;padding:10px 14px;border:none;background:transparent;color:#e6edf3;font-size:.85rem}
-    .chat-input input:focus{outline:none}
-    .chat-input .btn{border-radius:0}
-    .status{margin-top:16px;padding:8px 14px;border-radius:8px;font-size:.8rem;border-left:4px solid #2d3848;background:#111827}
-    .status-info{border-left-color:#3b82f6}
-    .status-ok{border-left-color:#22c55e;background:#0f2a1a}
-    .status-warn{border-left-color:#eab308;background:#2a2510}
-    .status-error{border-left-color:#ef4444;background:#2a1010}
-    @media(max-width:600px){
-      .container{padding:12px 10px}
-      .video-grid{grid-template-columns:1fr}
-      .panel{padding:18px 16px}
-      .btn-icon{width:42px;height:42px;font-size:18px}
+    :root {
+      --bg-base: #070a13;
+      --bg-surface: rgba(15, 23, 42, 0.75);
+      --bg-surface-elevated: #111a2e;
+      --bg-card: #0b1222;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(99, 102, 241, 0.6);
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --radius-xl: 20px;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border-subtle);
+      --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border-subtle);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-base);
+      background-image: 
+        radial-gradient(circle at 50% -10%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ── Header ── */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(11, 18, 34, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-md);
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #93c5fd 0%, #c4b5fd 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .info-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .room-pill {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .room-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .room-pill .pill-val {
+      font-weight: 600;
+      color: #93c5fd;
+    }
+
+    .timer-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse-glow 1.5s infinite;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-dim);
+      border: 1px solid var(--border-subtle);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .badge--online {
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .badge--warn {
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    /* ── Main Layout Container ── */
+    .app-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ── Join Panel (Lobby) ── */
+    .lobby-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 16px;
+    }
+
+    .join-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 36px 32px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .join-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary-gradient);
+    }
+
+    .join-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .join-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      padding: 11px 12px 11px 36px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: rgba(8, 12, 22, 0.7);
+      color: var(--text-main);
+      font-size: 0.92rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .input-wrap input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: rgba(8, 12, 22, 0.95);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      border: none;
+      font-size: 0.92rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+      transition: all 0.2s ease;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.12); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 8px;
+      background: var(--primary-gradient);
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .feature-tags {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .feature-tag {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── Active Call Stage ── */
+    .call-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .stage-layout {
+      flex: 1;
+      display: flex;
+      gap: 16px;
+      min-height: 480px;
+      position: relative;
+    }
+
+    /* ── Video Grid ── */
+    .video-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      align-content: center;
+      justify-content: center;
+      background: rgba(8, 12, 22, 0.4);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .video-card {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: #000;
+      box-shadow: var(--shadow-card);
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid transparent;
+      transition: border-color 0.25s ease, transform 0.25s ease;
+    }
+
+    .video-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .video-card--local {
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .video-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .video-card--local video:not(.screenshare) {
+      transform: scaleX(-1);
+    }
+
+    /* Video Overlay & Badges */
+    .video-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, transparent 20%, transparent 80%, rgba(0, 0, 0, 0.6) 100%);
+    }
+
+    .video-overlay > * { pointer-events: auto; }
+
+    .video-top-bar {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .card-action-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: all 0.2s ease;
+    }
+    .card-action-btn:hover {
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+    }
+
+    .video-bottom-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-pill {
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(6px);
+      color: var(--text-main);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .user-pill .tag-self {
+      font-size: 0.65rem;
+      background: var(--primary);
+      color: #fff;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Avatar placeholder when camera is off */
+    .avatar-fallback {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 2;
+    }
+    .avatar-fallback.active { display: flex; }
+
+    .avatar-circle {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 8px 24px var(--accent-glow);
+    }
+    .avatar-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* ── Collapsible Chat Sidebar ── */
+    .chat-drawer {
+      width: 340px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .chat-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+    }
+
+    .chat-log {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 0.84rem;
+      min-height: 200px;
+    }
+
+    .chat-msg {
+      display: flex;
+      flex-direction: column;
+      max-width: 85%;
+      word-break: break-word;
+    }
+
+    .chat-msg--self {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .chat-msg--peer {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+
+    .chat-msg-meta {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-bottom: 3px;
+      padding: 0 4px;
+    }
+
+    .chat-msg-bubble {
+      padding: 8px 13px;
+      border-radius: var(--radius-md);
+      line-height: 1.45;
+    }
+
+    .chat-msg--self .chat-msg-bubble {
+      background: var(--primary-gradient);
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .chat-msg--peer .chat-msg-bubble {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+      border-bottom-left-radius: 2px;
+    }
+
+    .chat-msg--sys {
+      align-self: center;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin: 4px 0;
+    }
+
+    .chat-input-wrap {
+      display: flex;
+      padding: 12px;
+      gap: 8px;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .chat-input-wrap input {
+      flex: 1;
+      padding: 9px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: rgba(8, 12, 22, 0.7);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+    .chat-input-wrap input:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    .chat-send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      border: none;
+      background: var(--primary-gradient);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .chat-send-btn:hover { opacity: 0.9; }
+
+    /* ── Floating Control Dock ── */
+    .dock-wrapper {
+      display: flex;
+      justify-content: center;
+      padding: 8px 0;
+    }
+
+    .media-dock {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-dock {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-dock:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-2px);
+    }
+
+    .btn-dock:active { transform: translateY(0); }
+
+    .btn-dock--active {
+      background: rgba(59, 130, 246, 0.25);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-dock--muted {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-dock--danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-dock--danger:hover {
+      background: var(--danger-hover);
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .dock-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--bg-base);
+    }
+
+    /* ── Bottom Status Bar ── */
+    .status-bar {
+      margin-top: 10px;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .status-info { color: #60a5fa; }
+    .status-ok { color: #34d399; }
+    .status-warn { color: #fbbf24; }
+    .status-error { color: #f87171; }
+
+    /* ── Toast Notifications ── */
+    .toast-container {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .toast {
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-lg);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+      animation: toast-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s ease;
+    }
+    .toast--leaving {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .app-header { padding: 12px 16px; }
+      .app-main { padding: 12px; }
+      .stage-layout { flex-direction: column; }
+      .chat-drawer {
+        position: fixed;
+        bottom: 80px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+        height: 380px;
+        z-index: 60;
+      }
+      .video-grid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+      }
+      .btn-dock { width: 42px; height: 42px; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header class="header">
+
+  <!-- App Header -->
+  <header class="app-header">
+    <a href="#" class="brand">
+      <div class="brand-icon">🎥</div>
       <h1>WebRTC Call</h1>
+    </a>
+
+    <!-- Center Call Info (when in room) -->
+    <div class="header-center hidden" id="headerCallInfo">
+      <div class="info-pill room-pill" id="roomPill" title="点击复制邀请链接">
+        <span>房间:</span>
+        <span class="pill-val" id="roomPillVal">demo</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+      </div>
+      <div class="info-pill">
+        <span class="timer-dot"></span>
+        <span id="callTimer">00:00</span>
+      </div>
+      <div class="info-pill">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span id="memberCount">1 人在线</span>
+      </div>
+    </div>
+
+    <!-- Right Connection Badge -->
+    <div class="header-status">
       <span class="badge" id="connBadge">离线</span>
-    </header>
+    </div>
+  </header>
 
-    <section class="panel" id="joinPanel">
-      <div class="form-row">
-        <label for="room">房间</label>
-        <input id="room" placeholder="demo" autocomplete="off" spellcheck="false" />
-      </div>
-      <div class="form-row">
-        <label for="name">昵称</label>
-        <input id="name" placeholder="Alice" autocomplete="off" spellcheck="false" />
-      </div>
-      <button id="start" class="btn btn-primary">加入房间</button>
-    </section>
+  <!-- Main Area -->
+  <main class="app-main">
 
-    <section class="panel hidden" id="callPanel" style="max-width:none">
-      <div class="video-grid" id="videoGrid">
-        <div class="video-card video-card--local">
-          <video id="local" autoplay playsinline muted></video>
-          <span class="video-label" id="localLabel">我</span>
+    <!-- 1. Lobby (Join Panel) -->
+    <div class="lobby-wrapper" id="joinPanel">
+      <div class="join-card">
+        <h2 class="join-title">开启实时通话</h2>
+        <p class="join-desc">基于浏览器原生 WebRTC，点对点加密音视频传输</p>
+
+        <div class="form-group">
+          <label for="room">房间名称</label>
+          <div class="input-wrap">
+            <span class="input-icon">#</span>
+            <input id="room" placeholder="demo" autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="name">您的昵称</label>
+          <div class="input-wrap">
+            <span class="input-icon">@</span>
+            <input id="name" placeholder="Alice" autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+
+        <button id="start" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-5m0 0l-5-5m5 5H4"/></svg>
+          <span>加入房间</span>
+        </button>
+
+        <div class="feature-tags">
+          <span class="feature-tag">⚡ 原生 P2P</span>
+          <span class="feature-tag">🔒 端到端通道</span>
+          <span class="feature-tag">🖥 屏幕共享</span>
+          <span class="feature-tag">💬 实时文字</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Active Call Stage (Call Panel) -->
+    <div class="call-container hidden" id="callPanel">
+      <div class="stage-layout">
+        
+        <!-- Video Grid -->
+        <div class="video-grid" id="videoGrid">
+          <!-- Local User Card -->
+          <div class="video-card video-card--local" id="localCard">
+            <div class="avatar-fallback" id="localAvatar">
+              <div class="avatar-circle" id="localAvatarCircle">ME</div>
+              <span class="avatar-name" id="localAvatarName">我</span>
+            </div>
+            <video id="local" autoplay playsinline muted></video>
+            <div class="video-overlay">
+              <div class="video-top-bar">
+                <button class="card-action-btn" title="全屏" onclick="toggleCardFullscreen('localCard')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                </button>
+              </div>
+              <div class="video-bottom-bar">
+                <div class="user-pill">
+                  <span id="localLabel">我</span>
+                  <span class="tag-self">您</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Sidebar / Drawer -->
+        <aside class="chat-drawer hidden" id="chatDrawer">
+          <div class="chat-header">
+            <div class="chat-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              <span>房间聊天 (P2P)</span>
+            </div>
+            <button class="card-action-btn" id="closeChatBtn" title="关闭聊天">✕</button>
+          </div>
+          <div class="chat-log" id="chatLog"></div>
+          <form class="chat-input-wrap" id="chatForm">
+            <input id="chatText" placeholder="发送消息 (Enter)..." autocomplete="off" />
+            <button type="submit" class="chat-send-btn" title="发送">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            </button>
+          </form>
+        </aside>
+      </div>
+
+      <!-- Floating Media Dock -->
+      <div class="dock-wrapper">
+        <div class="media-dock">
+          <button id="toggleMic" class="btn-dock" title="麦克风">
+            <svg id="iconMic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          </button>
+          <button id="toggleCam" class="btn-dock" title="摄像头">
+            <svg id="iconCam" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+          </button>
+          <button id="shareScreen" class="btn-dock" title="屏幕共享">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </button>
+          <button id="toggleChat" class="btn-dock" title="聊天">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+            <span class="dock-badge hidden" id="unreadBadge">0</span>
+          </button>
+          <button id="leave" class="btn-dock btn-dock--danger" title="离开通话">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6 19.8 19.8 0 0 1-3.12-8.68A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="22" y1="2" x2="2" y2="22"/></svg>
+          </button>
         </div>
       </div>
 
-      <div class="media-controls">
-        <button id="toggleMic" class="btn-icon" title="麦克风">🎤</button>
-        <button id="toggleCam" class="btn-icon" title="摄像头">📷</button>
-        <button id="shareScreen" class="btn-icon" title="屏幕共享">🖥</button>
-        <button id="leave" class="btn-icon btn-icon--danger" title="离开">📞</button>
-      </div>
+    </div>
 
-      <div class="chat">
-        <div class="chat-log" id="chatLog"></div>
-        <form class="chat-input" id="chatForm">
-          <input id="chatText" placeholder="输入消息，Enter 发送..." autocomplete="off" />
-          <button type="submit" class="btn btn-sm">发送</button>
-        </form>
-      </div>
-    </section>
+    <!-- Bottom Status Line -->
+    <div class="status-bar" id="status">就绪</div>
+  </main>
 
-    <div class="status" id="status">就绪</div>
-  </div>
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
 
   <script>
     const $ = s => document.querySelector(s);
@@ -115,6 +932,8 @@
     let screenStream = null, usingScreen = false;
     let intentionalLeave = false, reconnectAttempts = 0;
     let micEnabled = true, camEnabled = true;
+    let callTimerInterval = null, callStartTime = null;
+    let chatOpen = false, unreadCount = 0;
     const MAX_RECONNECT = 5;
     const pcs = new Map();
     const dataChannels = new Map();
@@ -124,55 +943,166 @@
       joinPanel: $("#joinPanel"), callPanel: $("#callPanel"), connBadge: $("#connBadge"),
       status: $("#status"), chatLog: $("#chatLog"), chatForm: $("#chatForm"), chatText: $("#chatText"),
       videoGrid: $("#videoGrid"), localVideo: $("#local"), localLabel: $("#localLabel"),
+      localAvatar: $("#localAvatar"), localAvatarCircle: $("#localAvatarCircle"), localAvatarName: $("#localAvatarName"),
       startBtn: $("#start"), leaveBtn: $("#leave"),
       toggleMic: $("#toggleMic"), toggleCam: $("#toggleCam"), shareScreen: $("#shareScreen"),
+      toggleChat: $("#toggleChat"), chatDrawer: $("#chatDrawer"), closeChatBtn: $("#closeChatBtn"),
+      unreadBadge: $("#unreadBadge"), headerCallInfo: $("#headerCallInfo"), roomPill: $("#roomPill"),
+      roomPillVal: $("#roomPillVal"), callTimer: $("#callTimer"), memberCount: $("#memberCount")
+    };
+
+    // Auto-fill room from URL query string if present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("room")) {
+      $("#room").value = urlParams.get("room");
+    }
+
+    // SVG templates for toggles
+    const ICONS = {
+      micOn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+      micOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="2" x2="22" y2="22"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+      camOn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>',
+      camOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="2" x2="22" y2="22"/><path d="m22 8-6 4 6 4V8Z"/><path d="M14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2"/><path d="M10 6h4a2 2 0 0 1 2 2v4"/></svg>'
     };
 
     function send(obj) {
       if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
     }
     const shortId = id => id ? id.slice(0, 8) : "???";
+
+    function showToast(msg, type = "info") {
+      const container = $("#toastContainer");
+      if (!container) return;
+      const t = document.createElement("div");
+      t.className = "toast";
+      t.innerHTML = `<span>${msg}</span>`;
+      container.appendChild(t);
+      setTimeout(() => {
+        t.classList.add("toast--leaving");
+        setTimeout(() => t.remove(), 300);
+      }, 3000);
+    }
+
     function setStatus(text, type = "info") {
       els.status.textContent = text;
-      els.status.className = "status status-" + type;
+      els.status.className = "status-bar status-" + type;
     }
+
     function setBadge(state) {
       const b = els.connBadge;
       b.className = "badge";
-      if (state === "online") { b.textContent = "在线"; b.classList.add("badge--online"); }
-      else if (state === "warn") { b.textContent = "重连中"; b.classList.add("badge--warn"); }
-      else { b.textContent = "离线"; }
+      if (state === "online") {
+        b.innerHTML = '<span class="timer-dot"></span>在线';
+        b.classList.add("badge--online");
+      } else if (state === "warn") {
+        b.textContent = "重连中";
+        b.classList.add("badge--warn");
+      } else {
+        b.textContent = "离线";
+      }
     }
+
+    function updateMemberCount() {
+      const count = pcs.size + 1;
+      els.memberCount.textContent = `${count} 人在线`;
+    }
+
+    function startTimer() {
+      callStartTime = Date.now();
+      clearInterval(callTimerInterval);
+      callTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2, "0");
+        const s = String(elapsed % 60).padStart(2, "0");
+        els.callTimer.textContent = `${m}:${s}`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(callTimerInterval);
+      els.callTimer.textContent = "00:00";
+    }
+
     function logChat(html) {
       const div = document.createElement("div");
-      div.innerHTML = '<span class="msg-time">' + new Date().toLocaleTimeString() + "</span>" + html;
+      div.innerHTML = html;
       els.chatLog.appendChild(div);
       els.chatLog.scrollTop = els.chatLog.scrollHeight;
     }
-    const logSystem = t => logChat('<span class="msg-sys">' + t + "</span>");
-    const logMessage = (name, text) => logChat('<span class="msg-name">' + name + ":</span> " + text.replace(/</g, "&lt;"));
+
+    function logSystem(t) {
+      logChat(`<div class="chat-msg--sys">${t}</div>`);
+    }
+
+    function logMessage(name, text) {
+      const isSelf = name === "我" || name === displayName;
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      
+      const html = `
+        <div class="chat-msg ${isSelf ? 'chat-msg--self' : 'chat-msg--peer'}">
+          <div class="chat-msg-meta">${name} · ${time}</div>
+          <div class="chat-msg-bubble">${safeText}</div>
+        </div>
+      `;
+      logChat(html);
+
+      if (!chatOpen && !isSelf) {
+        unreadCount++;
+        els.unreadBadge.textContent = unreadCount;
+        els.unreadBadge.classList.remove("hidden");
+        showToast(`新消息来自 ${name}: ${safeText.slice(0, 20)}`);
+      }
+    }
+
+    window.toggleCardFullscreen = function(cardId) {
+      const card = document.getElementById(cardId);
+      if (!card) return;
+      if (!document.fullscreenElement) {
+        card.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
 
     function ensureVideoCard(peerId) {
       const cid = "vc-" + peerId;
       let card = document.getElementById(cid);
       if (card) return card.querySelector("video");
+
       card = document.createElement("div");
       card.id = cid;
       card.className = "video-card";
-      const video = document.createElement("video");
-      video.autoplay = true;
-      video.playsInline = true;
-      const label = document.createElement("span");
-      label.className = "video-label";
-      label.textContent = shortId(peerId);
-      card.appendChild(video);
-      card.appendChild(label);
+
+      const initial = shortId(peerId).slice(0, 2).toUpperCase();
+      card.innerHTML = `
+        <div class="avatar-fallback" id="avatar-${peerId}">
+          <div class="avatar-circle">${initial}</div>
+          <span class="avatar-name">${shortId(peerId)}</span>
+        </div>
+        <video autoplay playsinline></video>
+        <div class="video-overlay">
+          <div class="video-top-bar">
+            <button class="card-action-btn" title="全屏" onclick="toggleCardFullscreen('${cid}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </button>
+          </div>
+          <div class="video-bottom-bar">
+            <div class="user-pill">
+              <span>${shortId(peerId)}</span>
+            </div>
+          </div>
+        </div>
+      `;
       els.videoGrid.appendChild(card);
-      return video;
+      updateMemberCount();
+      return card.querySelector("video");
     }
+
     function removeVideoCard(peerId) {
       const c = document.getElementById("vc-" + peerId);
       if (c) c.remove();
+      updateMemberCount();
     }
 
     function createPC(peerId) {
@@ -180,21 +1110,34 @@
       pcs.set(peerId, pc);
       const stream = usingScreen && screenStream ? screenStream : localStream;
       if (stream) stream.getTracks().forEach(t => pc.addTrack(t, stream));
-      pc.ontrack = ev => { ensureVideoCard(peerId).srcObject = ev.streams[0]; };
+
+      pc.ontrack = ev => {
+        const v = ensureVideoCard(peerId);
+        v.srcObject = ev.streams[0];
+      };
+
       pc.onicecandidate = ev => {
         if (ev.candidate) send({ type: "candidate", to: peerId, candidate: ev.candidate });
       };
+
       pc.ondatachannel = ev => setupDataChannel(peerId, ev.channel);
+
       pc.onconnectionstatechange = () => {
-        if (pc.connectionState === "failed") logSystem("与 " + shortId(peerId) + " 的连接失败");
-        if (pc.connectionState === "disconnected") logSystem("与 " + shortId(peerId) + " 的连接中断");
+        if (pc.connectionState === "connected") {
+          showToast(`已建立与 ${shortId(peerId)} 的 P2P 连接`, "success");
+        } else if (pc.connectionState === "failed") {
+          logSystem("与 " + shortId(peerId) + " 连接失败");
+        } else if (pc.connectionState === "disconnected") {
+          logSystem("与 " + shortId(peerId) + " 连接中断");
+        }
       };
+
       return pc;
     }
 
     function setupDataChannel(peerId, channel) {
       dataChannels.set(peerId, channel);
-      channel.onopen = () => logSystem("聊天通道已建立: " + shortId(peerId));
+      channel.onopen = () => logSystem("聊天通道已就绪: " + shortId(peerId));
       channel.onmessage = ev => logMessage(shortId(peerId), ev.data);
       channel.onclose = () => logSystem("聊天通道已关闭: " + shortId(peerId));
     }
@@ -218,6 +1161,7 @@
     function cleanupAllPeers() {
       for (const pid of pcs.keys()) closePeer(pid);
       knownPeers.clear();
+      updateMemberCount();
     }
 
     function handleMembers(members) {
@@ -234,6 +1178,7 @@
           knownPeers.delete(pid);
         }
       }
+      updateMemberCount();
     }
 
     function connectWS() {
@@ -242,7 +1187,7 @@
 
       ws.onopen = () => {
         reconnectAttempts = 0;
-        setStatus("已连接，加入房间...", "info");
+        setStatus("已连接信令服务器，正在加入房间...", "info");
         send({ type: "join", room: roomId, from: myId });
       };
 
@@ -251,7 +1196,8 @@
         switch (m.type) {
           case "joined":
             setBadge("online");
-            setStatus("已加入房间 " + roomId, "ok");
+            setStatus("已加入房间: " + roomId, "ok");
+            showToast(`成功进入房间 #${roomId}`);
             break;
           case "room_members":
             handleMembers(m.members || []);
@@ -277,55 +1223,60 @@
           case "hangup":
             closePeer(m.from);
             knownPeers.delete(m.from);
-            logSystem(shortId(m.from) + " 挂断");
+            logSystem(shortId(m.from) + " 挂断离开");
             break;
           case "error":
             logSystem("错误 [" + m.code + "]: " + m.error);
             setStatus("错误: " + m.error, "error");
+            showToast("错误: " + m.error, "error");
             break;
         }
       };
 
-      ws.onerror = () => setStatus("连接出错", "error");
+      ws.onerror = () => setStatus("WebSocket 连接出错", "error");
       ws.onclose = () => {
         setBadge("offline");
         if (!intentionalLeave) {
           cleanupAllPeers();
           scheduleReconnect();
         } else {
-          setStatus("已断开", "info");
+          setStatus("已断开连接", "info");
         }
       };
     }
 
     async function scheduleReconnect() {
       if (intentionalLeave || reconnectAttempts >= MAX_RECONNECT) {
-        if (reconnectAttempts >= MAX_RECONNECT) setStatus("重连次数已用尽，请重新加入", "error");
+        if (reconnectAttempts >= MAX_RECONNECT) setStatus("重连失败，已达最大次数限制", "error");
         return;
       }
       reconnectAttempts++;
       const delay = Math.min(1000 * 2 ** (reconnectAttempts - 1), 16000);
       setBadge("warn");
-      setStatus("断线重连中... 第" + reconnectAttempts + "/" + MAX_RECONNECT + "次（" + delay / 1000 + "s）", "warn");
+      setStatus(`断线重连中... (${reconnectAttempts}/${MAX_RECONNECT}) ${delay / 1000}s 后重试`, "warn");
       await new Promise(r => setTimeout(r, delay));
       if (intentionalLeave) return;
       try { connectWS(); }
-      catch (e) { logSystem("重连失败: " + e.message); scheduleReconnect(); }
+      catch (e) { logSystem("重连尝试失败: " + e.message); scheduleReconnect(); }
     }
 
     function toggleMic() {
       if (!localStream) return;
       micEnabled = !micEnabled;
       localStream.getAudioTracks().forEach(t => t.enabled = micEnabled);
-      els.toggleMic.textContent = micEnabled ? "🎤" : "🔇";
-      els.toggleMic.classList.toggle("btn-icon--muted", !micEnabled);
+      els.toggleMic.innerHTML = micEnabled ? ICONS.micOn : ICONS.micOff;
+      els.toggleMic.classList.toggle("btn-dock--muted", !micEnabled);
+      showToast(micEnabled ? "麦克风已开启" : "麦克风已静音");
     }
+
     function toggleCam() {
       if (!localStream) return;
       camEnabled = !camEnabled;
       localStream.getVideoTracks().forEach(t => t.enabled = camEnabled);
-      els.toggleCam.textContent = camEnabled ? "📷" : "🚫";
-      els.toggleCam.classList.toggle("btn-icon--muted", !camEnabled);
+      els.toggleCam.innerHTML = camEnabled ? ICONS.camOn : ICONS.camOff;
+      els.toggleCam.classList.toggle("btn-dock--muted", !camEnabled);
+      els.localAvatar.classList.toggle("active", !camEnabled);
+      showToast(camEnabled ? "摄像头已开启" : "摄像头已关闭");
     }
 
     async function toggleScreenShare() {
@@ -333,7 +1284,8 @@
       try {
         screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
         usingScreen = true;
-        els.shareScreen.classList.add("btn-icon--active");
+        els.shareScreen.classList.add("btn-dock--active");
+        els.localVideo.classList.add("screenshare");
         const track = screenStream.getVideoTracks()[0];
         track.onended = stopScreenShare;
         els.localVideo.srcObject = screenStream;
@@ -341,17 +1293,20 @@
           const sender = pc.getSenders().find(s => s.track && s.track.kind === "video");
           if (sender) await sender.replaceTrack(track);
         }
-        logSystem("已开启屏幕共享");
+        showToast("已开启屏幕共享");
+        logSystem("您开启了屏幕共享");
       } catch (e) {
-        logSystem("屏幕共享失败: " + e.message);
+        showToast("屏幕共享启动取消/失败", "warn");
       }
     }
+
     function stopScreenShare() {
       if (!screenStream) return;
       screenStream.getTracks().forEach(t => t.stop());
       screenStream = null;
       usingScreen = false;
-      els.shareScreen.classList.remove("btn-icon--active");
+      els.shareScreen.classList.remove("btn-dock--active");
+      els.localVideo.classList.remove("screenshare");
       if (localStream) els.localVideo.srcObject = localStream;
       for (const pc of pcs.values()) {
         const sender = pc.getSenders().find(s => s.track && s.track.kind === "video");
@@ -360,7 +1315,29 @@
           if (camTrack) sender.replaceTrack(camTrack);
         }
       }
-      logSystem("已停止屏幕共享");
+      showToast("已停止屏幕共享");
+      logSystem("您停止了屏幕共享");
+    }
+
+    function toggleChatDrawer() {
+      chatOpen = !chatOpen;
+      els.chatDrawer.classList.toggle("hidden", !chatOpen);
+      els.toggleChat.classList.toggle("btn-dock--active", chatOpen);
+      if (chatOpen) {
+        unreadCount = 0;
+        els.unreadBadge.textContent = "0";
+        els.unreadBadge.classList.add("hidden");
+        setTimeout(() => els.chatText.focus(), 150);
+      }
+    }
+
+    function copyInviteLink() {
+      const url = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
+      navigator.clipboard.writeText(url).then(() => {
+        showToast("邀请链接已复制到剪贴板！");
+      }).catch(() => {
+        showToast(`房间链接: ${url}`);
+      });
     }
 
     async function start() {
@@ -370,38 +1347,63 @@
       reconnectAttempts = 0;
       micEnabled = true;
       camEnabled = true;
-      els.toggleMic.textContent = "🎤";
-      els.toggleCam.textContent = "📷";
-      els.toggleMic.classList.remove("btn-icon--muted");
-      els.toggleCam.classList.remove("btn-icon--muted");
+
+      els.toggleMic.innerHTML = ICONS.micOn;
+      els.toggleCam.innerHTML = ICONS.camOn;
+      els.toggleMic.classList.remove("btn-dock--muted");
+      els.toggleCam.classList.remove("btn-dock--muted");
+      els.localAvatar.classList.remove("active");
       els.startBtn.disabled = true;
-      setStatus("获取媒体设备...", "info");
+
+      setStatus("正在获取音视频设备权限...", "info");
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         els.localVideo.srcObject = localStream;
       } catch {
-        logSystem("摄像头/麦克风获取失败，将以纯信令模式运行");
+        showToast("未检测到音视频设备或已被禁用，以信令模式加入", "warn");
+        logSystem("音视频设备不可用，已进入文本通信模式");
+        els.localAvatar.classList.add("active");
       }
+
       els.localLabel.textContent = displayName;
-      setStatus("连接服务器...", "info");
+      els.localAvatarName.textContent = displayName;
+      els.localAvatarCircle.textContent = displayName.slice(0, 2).toUpperCase();
+
+      els.roomPillVal.textContent = roomId;
+      els.headerCallInfo.classList.remove("hidden");
+      updateMemberCount();
+      startTimer();
+
+      setStatus("正在连接信令服务器...", "info");
       connectWS();
+
       els.joinPanel.classList.add("hidden");
       els.callPanel.classList.remove("hidden");
     }
 
     function leave() {
       intentionalLeave = true;
-      if (ws && ws.readyState === WebSocket.OPEN) { send({ type: "leave" }); ws.close(); }
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        send({ type: "leave" });
+        ws.close();
+      }
       if (usingScreen) stopScreenShare();
       cleanupAllPeers();
-      if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
       els.localVideo.srcObject = null;
       els.chatLog.innerHTML = "";
+      stopTimer();
       setBadge("offline");
+
+      els.headerCallInfo.classList.add("hidden");
       els.callPanel.classList.add("hidden");
       els.joinPanel.classList.remove("hidden");
       els.startBtn.disabled = false;
       setStatus("已离开房间", "info");
+      showToast("通话已结束");
     }
 
     function sendChat() {
@@ -409,21 +1411,52 @@
       if (!text) return;
       let sent = false;
       for (const dc of dataChannels.values()) {
-        if (dc.readyState === "open") { dc.send(text); sent = true; }
+        if (dc.readyState === "open") {
+          dc.send(text);
+          sent = true;
+        }
       }
-      if (sent) logMessage("我", text);
-      else logSystem("聊天通道未建立，请等待连接完成");
+      if (sent) {
+        logMessage("我", text);
+      } else {
+        logMessage("我", text);
+        logSystem("提示: 当前尚无其他对端建立 DataChannel，仅本地显示");
+      }
       els.chatText.value = "";
     }
 
-    els.startBtn.addEventListener("click", () =>
-      start().catch(e => { setStatus(e.message, "error"); els.startBtn.disabled = false; })
-    );
+    // Event listeners
+    els.startBtn.addEventListener("click", () => {
+      start().catch(e => {
+        setStatus("启动失败: " + e.message, "error");
+        els.startBtn.disabled = false;
+      });
+    });
     els.leaveBtn.addEventListener("click", leave);
     els.toggleMic.addEventListener("click", toggleMic);
     els.toggleCam.addEventListener("click", toggleCam);
     els.shareScreen.addEventListener("click", toggleScreenShare);
-    els.chatForm.addEventListener("submit", e => { e.preventDefault(); sendChat(); });
+    els.toggleChat.addEventListener("click", toggleChatDrawer);
+    els.closeChatBtn.addEventListener("click", toggleChatDrawer);
+    els.roomPill.addEventListener("click", copyInviteLink);
+    els.chatForm.addEventListener("submit", e => {
+      e.preventDefault();
+      sendChat();
+    });
+
+    // Keyboard shortcuts in call
+    window.addEventListener("keydown", e => {
+      if (els.callPanel.classList.contains("hidden")) return;
+      // Don't trigger if user is typing in chat input or any input
+      if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) return;
+      
+      const k = e.key.toLowerCase();
+      if (k === "m") { e.preventDefault(); toggleMic(); }
+      else if (k === "v") { e.preventDefault(); toggleCam(); }
+      else if (k === "s") { e.preventDefault(); toggleScreenShare(); }
+      else if (k === "c") { e.preventDefault(); toggleChatDrawer(); }
+    });
+
     window.addEventListener("beforeunload", leave);
   </script>
 </body>
