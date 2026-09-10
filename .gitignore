@@ -16,3 +16,10 @@ node_modules/
 .env
 .env.*
 *.local
+
+# AI tools (local only)
+.commandcode/
+.claude/
+.codex/
+.agents/
+.superpowers/
