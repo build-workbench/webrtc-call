@@ -19,6 +19,12 @@ func (h *Hub) handleJoin(c *Client, msg Message) error {
 		return errors.New("invalid room")
 	}
 
+	// JWT 鉴权下,join 的房间必须与 token 绑定的房间一致,防止越权进其他房间。
+	if allowed := c.allowedRoomValue(); allowed != "" && room != allowed {
+		_ = c.sendErrorAndLog(ErrInvalidRoom)
+		return errors.New("room does not match token binding")
+	}
+
 	boundID, currentRoom := c.identity()
 	if boundID != "" && boundID != id {
 		_ = c.sendErrorAndLog(ErrIdentityLocked)

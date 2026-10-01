@@ -11,18 +11,35 @@ import (
 
 // Client 表示一个已连接的 WebSocket 客户端。
 type Client struct {
-	mu        sync.RWMutex
-	id        string
-	room      string
-	connID    uint64
-	conn      *websocket.Conn
-	send      chan Message
-	closed    chan struct{}
-	closeOnce sync.Once
+	mu   sync.RWMutex
+	id   string
+	room string
+	// allowedRoom 是 JWT 中绑定的房间（未启用鉴权时为空串）。
+	// join 消息只能进入该房间,防止 token 持有者越权进别的房间。
+	allowedRoom string
+	connID      uint64
+	conn        *websocket.Conn
+	send        chan Message
+	closed      chan struct{}
+	closeOnce   sync.Once
 	// 速率限制
 	msgCount    int
 	msgWindow   time.Time
 	rateLimited bool
+}
+
+// setAllowedRoom 设置 JWT 绑定的房间。
+func (c *Client) setAllowedRoom(room string) {
+	c.mu.Lock()
+	c.allowedRoom = room
+	c.mu.Unlock()
+}
+
+// allowedRoomValue 返回 JWT 绑定的房间。
+func (c *Client) allowedRoomValue() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.allowedRoom
 }
 
 // identity 返回客户端的 ID 与房间。

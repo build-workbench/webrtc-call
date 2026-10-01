@@ -9,6 +9,20 @@ import (
 
 // HandleWS 处理 WebSocket 连接升级与消息处理。
 func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
+	// 配置了共享密钥时强制校验 join-token：连接必须携带有效的 ?token=,
+	// 且 token 绑定的房间与后续 join 消息一致(在 handleJoin 中复核)。
+	allowedRoom := ""
+	if len(h.authSecret) > 0 {
+		tok := r.URL.Query().Get("token")
+		room, err := parseJoinToken(tok, h.authSecret)
+		if err != nil {
+			log.Printf("signal: ws auth rejected from %s path=%s: %v", r.RemoteAddr, r.URL.Path, err)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		allowedRoom = room
+	}
+
 	conn, err := h.upg.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("signal: ws upgrade failed from %s path=%s: %v", r.RemoteAddr, r.URL.Path, err)
@@ -20,6 +34,9 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 		conn:   conn,
 		send:   make(chan Message, SendBufferSize),
 		closed: make(chan struct{}),
+	}
+	if allowedRoom != "" {
+		client.setAllowedRoom(allowedRoom)
 	}
 	if !h.registerClient(client) {
 		_ = conn.Close()

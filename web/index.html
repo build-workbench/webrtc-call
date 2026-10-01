@@ -1295,6 +1295,18 @@
       els.roomInput.value = urlParams.get("room");
     }
 
+    // Optional join-token issued by webrtc-signaling (SIGNAL_JWT_SECRET 共享密钥)。
+    // 提供时 WS 连接携带 ?token=,且房间以 token 绑定的 rid 为准。
+    const joinToken = urlParams.get("token") || "";
+
+    // 从 JWT payload 解出 rid(房间)。仅用于预填房间输入框,不在此处信任。
+    function roomFromToken(token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        return payload.rid || "";
+      } catch { return ""; }
+    }
+
     // Random room name generator
     els.btnRandomRoom.addEventListener("click", () => {
       const words = ["alpha", "beta", "gamma", "lounge", "dev", "matrix", "nexus", "studio", "cafe"];
@@ -1642,7 +1654,8 @@
 
     function connectWS() {
       const proto = location.protocol === "https:" ? "wss" : "ws";
-      ws = new WebSocket(proto + "://" + location.host + "/ws");
+      const tokenQS = joinToken ? `?token=${encodeURIComponent(joinToken)}` : "";
+      ws = new WebSocket(proto + "://" + location.host + "/ws" + tokenQS);
 
       ws.onopen = () => {
         reconnectAttempts = 0;
@@ -1804,6 +1817,14 @@
 
     async function start() {
       roomId = els.roomInput.value.trim() || "demo";
+      // 携带 join-token 时以 token 绑定的房间为准,保证与后端校验一致。
+      if (joinToken) {
+        const tokenRoom = roomFromToken(joinToken);
+        if (tokenRoom) {
+          roomId = tokenRoom;
+          els.roomInput.value = tokenRoom;
+        }
+      }
       displayName = els.nameInput.value.trim() || "Guest";
       intentionalLeave = false;
       reconnectAttempts = 0;

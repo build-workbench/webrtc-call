@@ -227,6 +227,7 @@ The service is configured via environment variables:
 |:---------|:-------|:-----|
 | `ADDR` | `:8080` | HTTP and WebSocket listening address and port |
 | `WS_ALLOWED_ORIGINS` | *(empty)* | WebSocket Origin validation whitelist. Comma-separated, e.g. `http://localhost:8080,https://mycall.com`; set to `*` to allow all origins |
+| `SIGNAL_JWT_SECRET` | *(empty)* | 与 webrtc-signaling 共享的 JWT 密钥。配置后 WS 必须携带 signaling 签发的 join-token（`?token=`）才能连接，且只能加入 token 绑定的房间；留空则跳过校验（本地开发） |
 
 ---
 
@@ -273,10 +274,16 @@ One container serves the web client, signaling, and health probe; media never to
 
 - **HTTPS is mandatory for `getUserMedia`**: browsers only grant camera/microphone access on `https://` (or `localhost`). Terminate TLS in front of the container.
 - **Restrict the Origin whitelist**: set `WS_ALLOWED_ORIGINS` to your real origin instead of the default `*`:
+- **Require a join-token on a public server**: set `SIGNAL_JWT_SECRET` (same value as webrtc-signaling's `SIGNAL_JWT_SECRET`) so only callers holding a signaling-issued token can join. Clients pass the token as `?token=` in the page URL:
 
 ```bash
 WS_ALLOWED_ORIGINS=https://call.example.com ADDR_PORT=8080 \
   docker compose -f deploy/docker/docker-compose.yml up -d --build
+```
+
+```bash
+# 让用户携带 signaling 签发的 join-token 进入对应房间
+https://call.example.com/?token=<signaling-issued-jwt>
 ```
 
 Reverse proxy examples (WebSocket upgrade forwarding included):

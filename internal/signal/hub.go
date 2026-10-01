@@ -37,6 +37,10 @@ var errClientClosed = errors.New("client closed")
 type Options struct {
 	AllowedOrigins  []string
 	AllowAllOrigins bool
+	// AuthSecret 为 JWT 共享密钥（与 webrtc-signaling 的 SIGNAL_JWT_SECRET
+	// 相同值）。非空时启用 join-token 校验：WS 必须携带有效的 ?token=，
+	// 且 token 的 rid 必须与 join 消息的房间一致。为空则跳过校验（本地开发）。
+	AuthSecret []byte
 }
 
 // Hub 管理房间,并在客户端之间路由信令消息。
@@ -48,6 +52,7 @@ type Hub struct {
 
 	allowedOrigins  []string
 	allowAllOrigins bool
+	authSecret      []byte
 	closed          bool
 	nextConnID      atomic.Uint64
 }
@@ -59,6 +64,7 @@ func NewHubWithOptions(opts Options) *Hub {
 		clients:         make(map[*Client]struct{}),
 		allowedOrigins:  append([]string(nil), opts.AllowedOrigins...),
 		allowAllOrigins: opts.AllowAllOrigins,
+		authSecret:      append([]byte(nil), opts.AuthSecret...),
 	}
 	h.upg = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {

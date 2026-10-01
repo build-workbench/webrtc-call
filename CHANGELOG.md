@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- 安全：WebSocket 信令支持共享 JWT 校验。配置 `SIGNAL_JWT_SECRET`（与 webrtc-signaling 同值）后，连接必须携带 signaling 签发的 join-token（`?token=`），且只能加入 token 绑定的房间；未配置则保持本地开发模式。
 - 客户端 ID 改用 `crypto.randomUUID()` 安全随机生成（原 `Math.random()` 可预测）
 
 ## 2.2.0 (2026-08-31)

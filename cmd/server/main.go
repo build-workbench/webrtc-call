@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -44,9 +44,12 @@ func main() {
 	}
 
 	wsAllowed, wsAllowAll := parseOrigins(os.Getenv("WS_ALLOWED_ORIGINS"))
+	// 与 webrtc-signaling 共享同一 JWT 密钥:配置后 WS 必须携带 signaling
+	// 签发的 join-token 才能连接(房间由 token 绑定)。未配置则跳过校验(本地开发)。
 	hub := sig.NewHubWithOptions(sig.Options{
 		AllowedOrigins:  wsAllowed,
 		AllowAllOrigins: wsAllowAll,
+		AuthSecret:      []byte(os.Getenv("SIGNAL_JWT_SECRET")),
 	})
 
 	mux := http.NewServeMux()
