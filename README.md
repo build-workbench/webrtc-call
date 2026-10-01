@@ -8,6 +8,322 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
 </p>
 
+An audio/video calling and real-time interaction client built on the browser's native WebRTC API (1v1 and small-scale Mesh multi-party), paired with a lightweight WebSocket signaling service implemented in Go.
+
+This project and the engineering-grade backend signaling service **[webrtc-signaling](https://github.com/build-workbench/webrtc-signaling)** are sister projects, forming a contrast of "front-end calling client ↔ back-end distributed signaling service".
+
+---
+
+## Table of Contents
+
+- [About This Project](#about-this-project)
+- [Key Features](#key-features)
+- [System Architecture & Sequence](#system-architecture--sequence)
+- [Quick Start](#quick-start)
+  - [Running Locally](#running-locally)
+  - [Notes on LAN / Multi-Device Testing](#notes-on-lan--multi-device-testing)
+- [Signaling Protocol Specification](#signaling-protocol-specification)
+  - [1. Client Sends (Client → Server)](#1-client-sends-client--server)
+  - [2. Server Sends (Server → Client)](#2-server-sends-server--client)
+  - [3. Signaling Protocol Error Codes](#3-signaling-protocol-error-codes)
+- [Configuration](#configuration)
+- [Common Development Commands](#common-development-commands)
+- [Docker Deployment](#docker-deployment)
+- [Project Structure](#project-structure)
+- [FAQ & Known Limitations](#faq--known-limitations)
+- [License](#license)
+
+---
+
+## Screenshots
+
+| Join Room | 1v1 Call |
+|----------|----------|
+| ![Join Room](docs/screenshots/join.png) | ![1v1 Call](docs/screenshots/call.png) |
+
+## About This Project
+
+This project aims to walk through the complete flow of WebRTC audio/video and data channel communication with the most concise, clear code:
+
+- **Front end**: developed as a single file in pure native HTML5 / JavaScript, **no front-end framework, no bundling/build tools**, works out of the box.
+- **Back end**: uses Go + `gorilla/websocket` to implement minimal signaling routing, room lifecycle management and client traffic control.
+- **Positioning**: an open-source project for learning, exploration and experimentation; the code strives for clear structure and runs out of the box.
+
+> [!NOTE]
+> This project adopts a Full Mesh P2P topology; media streams are not relayed through the server, making it suitable for 1v1 or lightweight calls with 2~4 participants. For production-grade large-scale conferencing, consider SFU (e.g. LiveKit, Mediasoup) architectures.
+
+---
+
+## Key Features
+
+### 🌐 Browser Front-end Experience
+- **Zero-dependency single file**: the entire front-end logic is encapsulated in [`web/index.html`](web/index.html), with no npm/vite build process.
+- **Audio/video calling**: supports 1v1 and multi-party Mesh audio/video interconnection, with a dynamic adaptive grid video layout.
+- **Peripheral control**: supports one-click mute/unmute and camera off/on.
+- **Screen sharing**: desktop/window capture via the `getDisplayMedia` API, seamlessly replacing the current PeerConnection video track.
+- **P2P data chat**: direct messaging between clients based on the WebRTC `RTCDataChannel`, without consuming signaling server bandwidth.
+- **Connection resilience**: built-in exponential backoff reconnection (up to 5 retries) and heartbeat keep-alive detection.
+
+### ⚙️ Go Signaling Back End
+- **Room management**: an in-memory `Hub` manages client sessions and automatically recycles empty rooms.
+- **Precise message routing**: supports point-to-point forwarding based on the `To` field as well as room broadcast.
+- **Protection & rate limiting**: built-in token-bucket rate limiting (burst 50 messages, steady state 30 messages/second) to prevent malicious packet flooding.
+- **Security & operations**:
+  - Supports `Origin` whitelist filtering and HTTP security header injection (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`).
+  - Health check probe endpoint (`GET /healthz`).
+  - Supports system signal listening and smooth graceful shutdown.
+
+---
+
+## System Architecture & Sequence
+
+### Network Topology
+
+```
+┌──────────────┐                       ┌──────────────┐
+│   Client A   │◄─────── WebSocket ───►│  Go Hub Svr  │
+│ (web/browser)│     (信令交互/路由)    │  (:8080/ws)  │
+└──────┬───────┘                       └──────┬───────┘
+       │                                      │
+       │                               WebSocket
+       │                               (信令交互)
+       │                                      │
+       │                               ┌──────▼───────┐
+       │                               │   Client B   │
+       │                               │ (web/browser)│
+       │                               └──────┬───────┘
+       │                                      │
+       └═══════════════ P2P 直连 ══════════════┘
+            • 媒体流 (SRTP): 音频 / 视频 / 屏幕共享
+            • 数据通道 (SCTP): RTCDataChannel 文本消息
+```
+
+### Communication Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as 客户端 A
+    participant S as 信令服务器 (Go Hub)
+    actor B as 客户端 B
+
+    Note over A,S: 建立 WebSocket 连接
+    A->>S: join {"room": "demo", "from": "u-alice"}
+    S-->>A: joined {"room": "demo", "from": "u-alice"}
+    S-->>A: room_members ["u-alice"]
+
+    Note over B,S: 客户端 B 加入相同房间
+    B->>S: join {"room": "demo", "from": "u-bob"}
+    S-->>B: joined
+    S-->>A: room_members ["u-alice", "u-bob"]
+    S-->>B: room_members ["u-alice", "u-bob"]
+
+    Note over A,B: 发起 WebRTC 协商 (PeerConnection)
+    A->>S: offer {"to": "u-bob", "sdp": {...}}
+    S->>B: offer {"from": "u-alice", "sdp": {...}}
+    B->>S: answer {"to": "u-alice", "sdp": {...}}
+    S->>A: answer {"from": "u-bob", "sdp": {...}}
+
+    Note over A,B: 交换 ICE 候选 (NAT 穿透协商)
+    A->>S: candidate {"to": "u-bob", "candidate": {...}}
+    S->>B: candidate {"from": "u-alice", ...}
+    B->>S: candidate {"to": "u-alice", "candidate": {...}}
+    S->>A: candidate {"from": "u-bob", ...}
+
+    Note over A,B: P2P 连接建立成功
+    A<<-->>B: 传输音视频流 (SRTP) & DataChannel 聊天 (SCTP)
+```
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Install [Go](https://go.dev/dl/) (>= 1.22)
+
+### Running Locally
+
+1. **Start the service**:
+   ```bash
+   go run ./cmd/server
+   ```
+   Or via the Makefile:
+   ```bash
+   make run
+   ```
+
+2. **Try a call**:
+   - Open a browser and visit `http://localhost:8080`.
+   - Enter a room name (e.g. `demo`) and a nickname (e.g. `Alice`), and allow the browser to access the camera and microphone.
+   - Open another tab or an incognito window, also visit `http://localhost:8080`, and enter the same room name with another nickname (e.g. `Bob`).
+   - The two ends can then establish a P2P audio/video call and chat via the chat box at the bottom.
+
+### Notes on LAN / Multi-Device Testing
+
+> [!WARNING]
+> **About browser camera/microphone permission restrictions**:
+> For security reasons, modern browsers (Chrome, Edge, Safari, etc.) **only allow calling the `getUserMedia` audio/video APIs in a secure context (i.e. `localhost` or `https://`)**.
+>
+> If you want to test across devices over the LAN via IP (e.g. `http://192.168.1.x:8080`), there are two solutions:
+> 1. **Chrome developer insecure-origin flag**:
+>    In Chrome's address bar on the remote device, enter `chrome://flags/#unsafely-treat-insecure-origin-as-secure`, fill in your service address (e.g. `http://192.168.1.100:8080`) and enable it (Enabled); after restarting the browser, media devices will be authorized.
+> 2. **Configure a reverse proxy (recommended)**: use Caddy, Nginx, or a locally signed self-signed certificate via mkcert, and access over HTTPS.
+
+---
+
+## Signaling Protocol Specification
+
+The WebSocket service is mounted at `/ws`; all messages use JSON format, with the message action distinguished by the `type` field.
+
+### 1. Client Sends (Client → Server)
+
+| type | Required Fields | Example & Description |
+|:-----|:--------|:----------|
+| `join` | `room`, `from` | `{"type":"join","room":"demo","from":"user-1"}` joins the specified room |
+| `leave` | - | `{"type":"leave"}` actively leaves the room and cleans up resources |
+| `ping` | - | `{"type":"ping"}` client keep-alive heartbeat |
+| `offer` | `to`, `sdp` | `{"type":"offer","to":"user-2","sdp":{...}}` sends the SDP Offer |
+| `answer` | `to`, `sdp` | `{"type":"answer","to":"user-1","sdp":{...}}` sends the SDP Answer |
+| `candidate` | `to`, `candidate` | `{"type":"candidate","to":"user-2","candidate":{...}}` transmits ICE candidates |
+| `hangup` | `to` | `{"type":"hangup","to":"user-2"}` ends the call with the specified peer (broadcast when `to` is empty) |
+
+### 2. Server Sends (Server → Client)
+
+| type | Included Fields | Description |
+|:-----|:--------|:-----|
+| `joined` | `room`, `from` | Confirmation of successfully joining a room |
+| `room_members` | `room`, `members` | Broadcast of room member changes (full array of member IDs) |
+| `pong` | - | Heartbeat reply |
+| `error` | `code`, `error` | Signaling error notification |
+
+### 3. Signaling Protocol Error Codes
+
+| Error Code (`code`) | Description |
+|:--------------|:-----|
+| `invalid_id` | User ID is empty or contains illegal characters (only letters, digits, hyphens and underscores allowed, <= 64 characters) |
+| `invalid_room` | Room name is invalid or contains control characters (<= 64 characters) |
+| `duplicate_id` | A user ID with the same name already exists in the current room |
+| `identity_locked` | The WebSocket connection has already bound an identity, which cannot be changed midway |
+| `room_full` | The room has reached its member limit (default single-room limit: 50) |
+| `room_limit_reached` | The global number of rooms has reached the limit (default limit: 1000) |
+| `already_joined` | The client is already in a room and must leave before joining another room |
+| `not_joined` | Attempting to forward a message before joining a room |
+| `invalid_target` / `target_not_found` | The target peer ID is invalid, or the target user is no longer in the current room |
+| `rate_limited` | Triggered the per-client send rate limit (burst > 50 or steady state > 30 messages/second) |
+| `unknown_type` | Unsupported signaling message type |
+
+---
+
+## Configuration
+
+The service is configured via environment variables:
+
+| Environment Variable | Default | Description |
+|:---------|:-------|:-----|
+| `ADDR` | `:8080` | HTTP and WebSocket listening address and port |
+| `WS_ALLOWED_ORIGINS` | *(empty)* | WebSocket Origin validation whitelist. Comma-separated, e.g. `http://localhost:8080,https://mycall.com`; set to `*` to allow all origins |
+
+---
+
+## Common Development Commands
+
+The project ships with a standard `Makefile` for everyday build and verification:
+
+```bash
+make run    # 启动本地服务
+make test   # 运行单元测试（开启 -race 竞态检测）
+make vet    # 执行 go vet 静态代码分析
+make fmt    # 自动格式化 Go 代码
+make build  # 编译二进制可执行文件
+make clean  # 清理临时测试覆盖率文件
+```
+
+---
+
+## Docker Deployment
+
+### 1. Docker Compose (Recommended)
+
+The project provides a Compose configuration under the `deploy/docker/` directory:
+
+```bash
+docker compose -f deploy/docker/docker-compose.yml up -d --build
+```
+
+### 2. Manual Image Build and Run
+
+```bash
+# 构建镜像
+docker build -f deploy/docker/Dockerfile -t webrtc-call .
+
+# 启动容器并映射端口
+docker run --rm -d -p 8080:8080 --name webrtc-call webrtc-call
+```
+
+---
+
+## Project Structure
+
+```
+webrtc-call/
+├── cmd/
+│   └── server/
+│       └── main.go           # 服务入口（HTTP 服务、路由初始化、优雅停机）
+├── internal/
+│   └── signal/               # 信令服务核心实现
+│       ├── client.go         # 客户端连接抽象、写通道泵、令牌桶限流
+│       ├── errors.go         # 协议级错误码与定义
+│       ├── forward.go        # 点对点信令消息路由转发
+│       ├── handler.go        # HTTP 升级 WebSocket 处理器
+│       ├── hub.go            # 房间管理、全局会话调度与广播
+│       ├── hub_test.go       # Hub 并发与核心逻辑测试
+│       ├── join.go           # 用户进房逻辑与 ID/房间名规范化校验
+│       ├── join_test.go      # 进房校验单元测试
+│       └── message.go        # 信令消息结构体及类型常量
+├── web/
+│   └── index.html            # 原生单页面 Web 客户端（音视频 UI、WebRTC 逻辑、DataChannel）
+├── deploy/
+│   └── docker/
+│       ├── Dockerfile        # 多阶段轻量 Alpine 镜像构建（含健康检查）
+│       └── docker-compose.yml# 容器编排配置
+├── Makefile                  # 构建、测试、格式化辅助脚本
+├── CHANGELOG.md              # 版本变更记录
+├── LICENSE                   # MIT 许可证
+└── README.md
+```
+
+---
+
+## FAQ & Known Limitations
+
+1. **Why might connections fail when not on the same LAN?**
+   - By default this project configures public STUN servers (`stun:stun.l.google.com:19302`) to obtain external mapped addresses. However, in complex peer NAT, Symmetric NAT, or corporate firewall environments, P2P hole punching cannot succeed directly and a **TURN relay server** is required. For public-network traversal, configure your own relay service such as coturn in the `iceServers` of [`web/index.html`](web/index.html).
+2. **What limits does the Mesh architecture impose on room size?**
+   - Under the Full Mesh architecture, each participant needs to separately encode, push streams, and establish connections with the other $N-1$ participants; the total number of connections in a room is $\frac{N(N-1)}{2}$. Client upstream/downstream bandwidth and CPU overhead grow quadratically with the number of participants; typically 2~4 people per room is recommended.
+3. **Why doesn't the front end use Vue/React?**
+   - The original intent of the project was to reproduce the most essential usage of the native WebRTC APIs (`RTCPeerConnection`, `RTCDataChannel`, `MediaStream`), removing all build tools and framework abstractions so users can directly inspect and debug every native event.
+
+---
+
+## License
+
+This project is open-sourced under the [MIT License](LICENSE).
+
+---
+
+<a id="chinese"></a>
+
+# WebRTC Call
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go" alt="Go Version" />
+  <img src="https://img.shields.io/badge/WebRTC-P2P%20Mesh-333333?style=flat-square&logo=webrtc" alt="WebRTC" />
+  <img src="https://img.shields.io/badge/WebSocket-gorilla-4F46E5?style=flat-square" alt="WebSocket" />
+  <img src="https://img.shields.io/badge/Docker-Supported-2496ED?style=flat-square&logo=docker" alt="Docker" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
+</p>
+
 基于浏览器原生 WebRTC API（1v1 及小规模 Mesh 多人）实现的音视频通话与实时交互客户端，配套用 Go 实现的轻量级 WebSocket 信令服务。
 
 本项目与后端工程化信令服务 **[webrtc-signaling](https://github.com/build-workbench/webrtc-signaling)** 互为姊妹项目，形成「**前端通话客户端 ↔ 后端分布式信令服务**」的对照。
@@ -23,8 +339,9 @@
   - [本地运行](#本地运行)
   - [局域网 / 多设备测试注意点](#局域网--多设备测试注意点)
 - [信令协议规范](#信令协议规范)
-  - [消息格式定义](#消息格式定义)
-  - [信令错误码](#信令错误码)
+  - [1. 客户端发送 (Client → Server)](#1-客户端发送-client--server)
+  - [2. 服务端发送 (Server → Client)](#2-服务端发送-server--client)
+  - [3. 信令协议错误码](#3-信令协议错误码)
 - [配置说明](#配置说明)
 - [常用开发命令](#常用开发命令)
 - [Docker 部署](#docker-部署)
