@@ -14,7 +14,7 @@
 
 An audio/video calling and real-time interaction client built on the browser's native WebRTC API (1v1 and small-scale Mesh multi-party), paired with a lightweight WebSocket signaling service implemented in Go.
 
-This project and the engineering-grade backend signaling service **[webrtc-signaling](https://github.com/build-workbench/webrtc-signaling)** are sister projects, forming a contrast of "front-end calling client ↔ back-end distributed signaling service".
+This project and the engineering-grade backend signaling service **[webrtc-signaling](https://github.com/build-workbench/webrtc-signaling)** are sister projects, pairing a front-end calling client with a back-end distributed signaling service.
 
 ---
 
@@ -64,7 +64,7 @@ This project aims to walk through the complete flow of WebRTC audio/video and da
 - **Zero-dependency single file**: the entire front-end logic is encapsulated in [`web/index.html`](web/index.html), with no npm/vite build process.
 - **Audio/video calling**: supports 1v1 and multi-party Mesh audio/video interconnection, with a dynamic adaptive grid video layout.
 - **Peripheral control**: supports one-click mute/unmute and camera off/on.
-- **Screen sharing**: desktop/window capture via the `getDisplayMedia` API, seamlessly replacing the current PeerConnection video track.
+- **Screen sharing**: desktop/window capture via the `getDisplayMedia` API, replacing the current PeerConnection video track.
 - **P2P data chat**: direct messaging between clients based on the WebRTC `RTCDataChannel`, without consuming signaling server bandwidth.
 - **Connection resilience**: built-in exponential backoff reconnection (up to 5 retries) and heartbeat keep-alive detection.
 
@@ -75,7 +75,7 @@ This project aims to walk through the complete flow of WebRTC audio/video and da
 - **Security & operations**:
   - Supports `Origin` whitelist filtering and HTTP security header injection (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`).
   - Health check probe endpoint (`GET /healthz`).
-  - Supports system signal listening and smooth graceful shutdown.
+  - Supports system signal listening and graceful shutdown.
 
 ---
 
@@ -267,6 +267,48 @@ docker run --rm -d -p 8080:8080 --name webrtc-call webrtc-call
 
 ---
 
+### 3. Self-Hosting on a Server
+
+One container serves the web client, signaling, and health probe; media never touches the server (P2P Mesh). Two things matter on a public server:
+
+- **HTTPS is mandatory for `getUserMedia`**: browsers only grant camera/microphone access on `https://` (or `localhost`). Terminate TLS in front of the container.
+- **Restrict the Origin whitelist**: set `WS_ALLOWED_ORIGINS` to your real origin instead of the default `*`:
+
+```bash
+WS_ALLOWED_ORIGINS=https://call.example.com ADDR_PORT=8080 \
+  docker compose -f deploy/docker/docker-compose.yml up -d --build
+```
+
+Reverse proxy examples (WebSocket upgrade forwarding included):
+
+```caddy
+# Caddy — certificate and WebSocket upgrades handled automatically
+call.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+```nginx
+# nginx
+server {
+    listen 443 ssl http2;
+    server_name call.example.com;
+    ssl_certificate     /etc/letsencrypt/live/call.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/call.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 86400s;
+    }
+}
+```
+
+Honest boundaries, restated for operators: there is **no TURN relay**, so callers behind strict/symmetric NAT may fail to connect (the FAQ below explains how to add coturn); there is **no user system or token auth** — anyone with the URL can join a room, so keep the deployment private or add auth at the proxy layer; the Mesh topology is designed for **2~4 participants per room**, not large meetings.
+
+---
+
 ## Project Structure
 
 ```
@@ -381,7 +423,7 @@ This project is open-sourced under the [MIT License](LICENSE).
 - **零依赖单文件**：整个前端逻辑封装于 [`web/index.html`](web/index.html)，无 npm/vite 编译流程。
 - **音视频通话**：支持 1v1 以及多人 Mesh 音视频互通，动态自适应多宫格视频布局。
 - **外设控制**：支持一键静音/取消静音、关闭/开启摄像头画面。
-- **屏幕共享**：基于 `getDisplayMedia` 接口实现桌面/窗口采集，无缝替换当前 PeerConnection 视频轨。
+- **屏幕共享**：基于 `getDisplayMedia` 接口实现桌面/窗口采集，并替换当前 PeerConnection 视频轨。
 - **P2P 数据聊天**：基于 WebRTC `RTCDataChannel` 实现客户端之间直接收发消息，不占用信令服务器带宽。
 - **连接韧性**：内置指数退避重连机制（最多重试 5 次）与心跳保活检测。
 
@@ -392,7 +434,7 @@ This project is open-sourced under the [MIT License](LICENSE).
 - **安全与运维**：
   - 支持 `Origin` 白名单过滤与 HTTP 安全响应头注入（`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`）。
   - 健康检查探针接口（`GET /healthz`）。
-  - 支持系统信号监听与平滑优雅下线（Graceful Shutdown）。
+  - 支持系统信号监听与优雅下线（Graceful Shutdown）。
 
 ---
 
@@ -581,6 +623,48 @@ docker build -f deploy/docker/Dockerfile -t webrtc-call .
 # 启动容器并映射端口
 docker run --rm -d -p 8080:8080 --name webrtc-call webrtc-call
 ```
+
+---
+
+### 3. 部署到服务器（自托管）
+
+一个容器即可提供 Web 客户端、信令与健康检查；媒体流走 P2P Mesh，不经过服务器。公网部署时有两件事必须处理：
+
+- **`getUserMedia` 强制要求 HTTPS**：浏览器只允许在 `https://`（或 `localhost`）下调用摄像头/麦克风，请在容器前做 TLS 终结。
+- **收紧 Origin 白名单**：把 `WS_ALLOWED_ORIGINS` 从默认的 `*` 改为你的真实来源：
+
+```bash
+WS_ALLOWED_ORIGINS=https://call.example.com ADDR_PORT=8080 \
+  docker compose -f deploy/docker/docker-compose.yml up -d --build
+```
+
+反向代理示例（含 WebSocket 升级转发）：
+
+```caddy
+# Caddy —— 证书申请与 WebSocket 升级自动处理
+call.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+```nginx
+# nginx
+server {
+    listen 443 ssl http2;
+    server_name call.example.com;
+    ssl_certificate     /etc/letsencrypt/live/call.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/call.example.com/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 86400s;
+    }
+}
+```
+
+给运维者的边界声明：**无 TURN 中继**，严格 NAT/对称 NAT 环境下的通话方可能无法建立连接（如何在 `iceServers` 中配置 coturn 见下方 FAQ）；**无用户系统与鉴权**，拿到 URL 即可进房，请保持部署私有或在代理层加认证；Mesh 拓扑面向**每房间 2~4 人**，不适合大型会议。
 
 ---
 
