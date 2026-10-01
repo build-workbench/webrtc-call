@@ -1,3 +1,7 @@
+**English** | [中文](#chinese)
+
+<a id="top"></a>
+
 # WebRTC Call
 
 <p align="center">
@@ -313,6 +317,7 @@ This project is open-sourced under the [MIT License](LICENSE).
 ---
 
 <a id="chinese"></a>
+[English](#top) | **中文**
 
 # WebRTC Call
 
