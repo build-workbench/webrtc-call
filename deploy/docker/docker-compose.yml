@@ -4,7 +4,9 @@ services:
       context: ../..
       dockerfile: deploy/docker/Dockerfile
     ports:
-      - "8080:8080"
+      - "${ADDR_PORT:-8080}:8080"
     environment:
-      - WS_ALLOWED_ORIGINS=*
+      # 浏览器来源白名单。公网部署务必改成你的实际 origin（逗号分隔），
+      # "*" 仅建议用于本地/内网体验
+      - WS_ALLOWED_ORIGINS=${WS_ALLOWED_ORIGINS:-*}
     restart: unless-stopped
