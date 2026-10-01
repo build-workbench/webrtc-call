@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+
+- 客户端 ID 改用 `crypto.randomUUID()` 安全随机生成（原 `Math.random()` 可预测）
+
 ## 2.2.0 (2026-08-31)
 
 仓库更名为 webrtc-call，重新定位为浏览器端通话客户端：
