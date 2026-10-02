@@ -26,7 +26,7 @@ const (
 //   - join: Room, From 必填
 //   - offer/answer: To, SDP 必填，From 由服务器填充
 //   - candidate: To, Candidate 必填，From 由服务器填充
-//   - hangup: To 可选（空则广播），From 由服务器填充
+//   - hangup: To 必填（空则拒绝转发），From 由服务器填充
 type Message struct {
 	Type      string          `json:"type"`
 	Room      string          `json:"room"`

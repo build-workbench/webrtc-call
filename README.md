@@ -71,7 +71,7 @@ This project aims to walk through the complete flow of WebRTC audio/video and da
 ### ⚙️ Go Signaling Back End
 - **Room management**: an in-memory `Hub` manages client sessions and automatically recycles empty rooms.
 - **Precise message routing**: supports point-to-point forwarding based on the `To` field as well as room broadcast.
-- **Protection & rate limiting**: built-in token-bucket rate limiting (burst 50 messages, steady state 30 messages/second) to prevent malicious packet flooding.
+- **Protection & rate limiting**: built-in per-connection fixed-window rate limiting (30 messages per 1-second window) to prevent malicious packet flooding.
 - **Security & operations**:
   - Supports `Origin` whitelist filtering and HTTP security header injection (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`).
   - Health check probe endpoint (`GET /healthz`).
@@ -190,7 +190,7 @@ The WebSocket service is mounted at `/ws`; all messages use JSON format, with th
 | `offer` | `to`, `sdp` | `{"type":"offer","to":"user-2","sdp":{...}}` sends the SDP Offer |
 | `answer` | `to`, `sdp` | `{"type":"answer","to":"user-1","sdp":{...}}` sends the SDP Answer |
 | `candidate` | `to`, `candidate` | `{"type":"candidate","to":"user-2","candidate":{...}}` transmits ICE candidates |
-| `hangup` | `to` | `{"type":"hangup","to":"user-2"}` ends the call with the specified peer (broadcast when `to` is empty) |
+| `hangup` | `to` | `{"type":"hangup","to":"user-2"}` ends the call with the specified peer (`to` is required; an empty `to` is rejected with `invalid_target`) |
 
 ### 2. Server Sends (Server → Client)
 
@@ -214,7 +214,7 @@ The WebSocket service is mounted at `/ws`; all messages use JSON format, with th
 | `already_joined` | The client is already in a room and must leave before joining another room |
 | `not_joined` | Attempting to forward a message before joining a room |
 | `invalid_target` / `target_not_found` | The target peer ID is invalid, or the target user is no longer in the current room |
-| `rate_limited` | Triggered the per-client send rate limit (burst > 50 or steady state > 30 messages/second) |
+| `rate_limited` | Triggered the per-connection send rate limit (more than 30 messages in any 1-second window) |
 | `unknown_type` | Unsupported signaling message type |
 
 ---
@@ -325,7 +325,7 @@ webrtc-call/
 │       └── main.go           # 服务入口（HTTP 服务、路由初始化、优雅停机）
 ├── internal/
 │   └── signal/               # 信令服务核心实现
-│       ├── client.go         # 客户端连接抽象、写通道泵、令牌桶限流
+│       ├── client.go         # 客户端连接抽象、写通道泵、固定窗口限流
 │       ├── errors.go         # 协议级错误码与定义
 │       ├── forward.go        # 点对点信令消息路由转发
 │       ├── handler.go        # HTTP 升级 WebSocket 处理器
@@ -437,7 +437,7 @@ This project is open-sourced under the [MIT License](LICENSE).
 ### ⚙️ Go 信令后端
 - **房间管理**：基于内存的 `Hub` 管理客户端会话，自动回收空置房间。
 - **精准消息路由**：支持基于 `To` 字段的点对点转发及房间广播。
-- **防护与限流**：内置令牌桶速率限制（突发 50 条，稳态 30 条/秒），防止恶意刷包。
+- **防护与限流**：内置单连接固定窗口限流（任一 1 秒窗口最多 30 条），防止恶意刷包。
 - **安全与运维**：
   - 支持 `Origin` 白名单过滤与 HTTP 安全响应头注入（`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`）。
   - 健康检查探针接口（`GET /healthz`）。
@@ -556,7 +556,7 @@ WebSocket 服务挂载于 `/ws`，消息均采用 JSON 格式，通过 `type` �
 | `offer` | `to`, `sdp` | `{"type":"offer","to":"user-2","sdp":{...}}` 发送 SDP Offer |
 | `answer` | `to`, `sdp` | `{"type":"answer","to":"user-1","sdp":{...}}` 发送 SDP Answer |
 | `candidate` | `to`, `candidate` | `{"type":"candidate","to":"user-2","candidate":{...}}` 传输 ICE 候选 |
-| `hangup` | `to` | `{"type":"hangup","to":"user-2"}` 结束与指定节点的通话（`to` 为空时广播） |
+| `hangup` | `to` | `{"type":"hangup","to":"user-2"}` 结束与指定节点的通话（`to` 必填，为空将被拒绝并返回 `invalid_target`） |
 
 ### 2. 服务端发送 (Server → Client)
 
@@ -580,7 +580,7 @@ WebSocket 服务挂载于 `/ws`，消息均采用 JSON 格式，通过 `type` �
 | `already_joined` | 客户端已在房间中，需先离开再加入其他房间 |
 | `not_joined` | 尚未加入房间前尝试转发消息 |
 | `invalid_target` / `target_not_found` | 目标对端 ID 无效，或目标用户已不在当前房间 |
-| `rate_limited` | 触发单客户端发送速率限制（瞬时突发 > 50 或稳态 > 30 条/秒） |
+| `rate_limited` | 触发单连接发送速率限制（任一 1 秒窗口内超过 30 条） |
 | `unknown_type` | 不受支持的信令消息类型 |
 
 ---
@@ -684,7 +684,7 @@ webrtc-call/
 │       └── main.go           # 服务入口（HTTP 服务、路由初始化、优雅停机）
 ├── internal/
 │   └── signal/               # 信令服务核心实现
-│       ├── client.go         # 客户端连接抽象、写通道泵、令牌桶限流
+│       ├── client.go         # 客户端连接抽象、写通道泵、固定窗口限流
 │       ├── errors.go         # 协议级错误码与定义
 │       ├── forward.go        # 点对点信令消息路由转发
 │       ├── handler.go        # HTTP 升级 WebSocket 处理器

@@ -64,9 +64,9 @@ func (c *Client) setRoom(room string) {
 	c.mu.Unlock()
 }
 
-// checkRateLimit 实现令牌桶速率限制。
+// checkRateLimit 实现 1 秒固定窗口速率限制。
 // 若消息应被放行返回 true,被限速则返回 false。
-// 允许最多 RateLimitBurst(50)条突发,之后强制 MaxMessagesPerSecond(每秒 30 条)。
+// 任一 1 秒窗口内最多放行 MaxMessagesPerSecond(30)条消息。
 func (c *Client) checkRateLimit() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
